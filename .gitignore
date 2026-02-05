@@ -1,0 +1,12 @@
+node_modules/
+.env
+.DS_Store
+*.log
+data/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+ios/Pods/
+ios/build/
+*.xcworkspace

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="人生脚本">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%236C5CE7' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='100' fill='white'>🎬</text></svg>">
+    <title>人生脚本 Web 版</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root { 
+            --bg: #F9FBFB; 
+            --text: #333; 
+            --sub: #999; 
+            --accent: #6C5CE7;
+            --important-urgent: #FF6B6B;
+            --important-not: #4ECDC4;
+            --notimportant-urgent: #FFE66D;
+            --notimportant-not: #95E1D3;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, sans-serif; background: var(--bg);
+            margin: 0; padding: 0; color: var(--text); -webkit-tap-highlight-color: transparent;
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+        #intro-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; transition: opacity 0.6s;
+        }
+        .start-btn { margin-top: 40px; padding: 12px 35px; border: 1px solid rgba(255,255,255,0.3); border-radius: 30px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; letter-spacing: 2px; cursor: pointer; }
+        .header { padding: 44px 20px 15px; background: rgba(255,255,255,0.95); z-index: 50; border-bottom: 1px solid #eee; }
+        .header h1 { font-size: 20px; margin: 0; display: flex; align-items: center; justify-content: space-between; }
+        .header-controls { display: flex; gap: 8px; font-size: 12px; margin-top: 10px; }
+        .sync-btn, .export-btn { padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer; background: #eee; transition: 0.2s; }
+        .sync-btn:hover { background: #ddd; }
+        .export-btn { background: #6C5CE7; color: white; }
+        .page-container { flex: 1; position: relative; overflow: hidden; }
+        .page { display: none; height: 100%; overflow-y: auto; padding: 20px; padding-bottom: 180px; box-sizing: border-box; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+        /* 四象限布局 */
+        .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .matrix-cell { padding: 20px; border-radius: 12px; min-height: 300px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .matrix-cell h3 { margin: 0 0 15px 0; font-size: 14px; font-weight: 600; }
+        .matrix-cell.important-urgent { background: linear-gradient(135deg, var(--important-urgent)15, var(--important-urgent)05); border: 2px solid var(--important-urgent); }
+        .matrix-cell.important-not { background: linear-gradient(135deg, var(--important-not)15, var(--important-not)05); border: 2px solid var(--important-not); }
+        .matrix-cell.notimportant-urgent { background: linear-gradient(135deg, var(--notimportant-urgent)15, var(--notimportant-urgent)05); border: 2px solid var(--notimportant-urgent); }
+        .matrix-cell.notimportant-not { background: linear-gradient(135deg, var(--notimportant-not)15, var(--notimportant-not)05); border: 2px solid var(--notimportant-not); }
+
+        /* Flomo 式标签输入 */
+        .tag-input-wrapper { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 15px; }
+        .tag-input { flex: 1; min-width: 150px; border: 1px solid #ddd; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+        .tag-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .tag { padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.2s; border: none; }
+        .tag:hover { transform: scale(1.05); }
+        .tag.selected { box-shadow: 0 0 0 2px rgba(0,0,0,0.2); }
+        .time-slot { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #ddd; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .time-slot:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .time-slot.tagged { border-left-color: var(--accent); }
+
+        .time-row { display: flex; margin-bottom: 10px; align-items: center; }
+        .time-label { width: 40px; font-size: 12px; color: var(--sub); font-family: monospace; }
+        .block { flex: 1; height: 46px; background: white; border-radius: 10px; border: 1px dashed #ddd; display: flex; align-items: center; padding: 0 15px; font-size: 14px; color: var(--sub); transition: 0.2s; position: relative; cursor: pointer; }
+        .block.filled { border: none; color: #333; font-weight: 500; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .nav-bar { height: 60px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; position: fixed; bottom: 0; width: 100%; z-index: 100; }
+        .nav-item { text-align: center; font-size: 10px; color: #ccc; flex: 1; cursor: pointer; }
+        .nav-item.active { color: #333; font-weight: bold; }
+        .nav-icon { display: block; font-size: 20px; margin-bottom: 2px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: center; }
+        .modal { background: white; width: 80%; border-radius: 20px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+        .ai-btn { background: linear-gradient(135deg, #6C5CE7, #a363d9); color: white; width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3); margin-top: 10px; cursor: pointer; }
+        .ai-result { display: none; background: #F4F4FC; border-left: 4px solid #6C5CE7; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+    <div id="intro-layer">
+        <div style="font-size: 40px; margin-bottom: 20px;">🎬</div>
+        <div style="font-size: 20px; letter-spacing: 2px;">LIFE SCRIPT</div>
+        <div style="font-size: 12px; opacity: 0.5; margin-top: 5px;">3...2...1... Action!</div>
+        <button class="start-btn" onclick="startGame()">进入片场</button>
+    </div>
+
+    <div class="header">
+        <h1>
+            <span id="pageTitle">今日剧本</span>
+            <span style="font-size:12px; font-weight:normal; background:#eee; padding:4px 8px; border-radius:10px;">🗓️ <span id="dateStr">1月10日</span></span>
+        </h1>
+        <div class="header-controls">
+            <input type="text" id="userInput" placeholder="输入用户ID..." style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; width: 120px;">
+            <button class="sync-btn" onclick="syncWithServer()">☁️ 同步</button>
+            <button class="export-btn" onclick="exportAsImage()">📸 导出图片</button>
+        </div>
+    </div>
+
+    <div class="page-container">
+        
+        <!-- 四象限视图 -->
+        <div id="page-matrix" class="page active">
+            <div class="matrix-grid">
+                <div class="matrix-cell important-urgent">
+                    <h3>🔴 重要且紧急（Do First）</h3>
+                    <div class="tag-input-wrapper">
+                        <input type="text" id="input-iu" placeholder="#输入标签..." class="tag-input" onkeydown="handleTagInput(event, 'iu')">
+                        <button onclick="addTagForQuadrant('iu')" style="padding: 8px 12px; background: var(--important-urgent); color: white; border: none; border-radius: 8px; cursor: pointer;">+</button>
+                    </div>
+                    <div class="tag-list" id="tags-iu"></div>
+                    <div id="slots-iu"></div>
+                </div>
+
+                <div class="matrix-cell important-not">
+                    <h3>🔵 重要不紧急（Schedule）</h3>
+                    <div class="tag-input-wrapper">
+                        <input type="text" id="input-in" placeholder="#输入标签..." class="tag-input" onkeydown="handleTagInput(event, 'in')">
+                        <button onclick="addTagForQuadrant('in')" style="padding: 8px 12px; background: var(--important-not); color: white; border: none; border-radius: 8px; cursor: pointer;">+</button>
+                    </div>
+                    <div class="tag-list" id="tags-in"></div>
+                    <div id="slots-in"></div>
+                </div>
+
+                <div class="matrix-cell notimportant-urgent">
+                    <h3>🟡 不重要但紧急（Delegate）</h3>
+                    <div class="tag-input-wrapper">
+                        <input type="text" id="input-nu" placeholder="#输入标签..." class="tag-input" onkeydown="handleTagInput(event, 'nu')">
+                        <button onclick="addTagForQuadrant('nu')" style="padding: 8px 12px; background: var(--notimportant-urgent); color: #333; border: none; border-radius: 8px; cursor: pointer;">+</button>
+                    </div>
+                    <div class="tag-list" id="tags-nu"></div>
+                    <div id="slots-nu"></div>
+                </div>
+
+                <div class="matrix-cell notimportant-not">
+                    <h3>🟢 不重要不紧急（Eliminate）</h3>
+                    <div class="tag-input-wrapper">
+                        <input type="text" id="input-nn" placeholder="#输入标签..." class="tag-input" onkeydown="handleTagInput(event, 'nn')">
+                        <button onclick="addTagForQuadrant('nn')" style="padding: 8px 12px; background: var(--notimportant-not); color: #333; border: none; border-radius: 8px; cursor: pointer;">+</button>
+                    </div>
+                    <div class="tag-list" id="tags-nn"></div>
+                    <div id="slots-nn"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 周复盘视图 -->
+        <div id="page-weekly" class="page">
+            <div class="section-title">📝 导演周复盘</div>
+            <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                <div style="font-size: 12px; color: #999; margin-bottom: 5px; font-weight: bold;">🌟 高光时刻 (Highlight)</div>
+                <textarea id="highlight" rows="2" placeholder="本周最满意的表现..." style="width: 100%; border: none; background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 14px; font-family: inherit;"></textarea>
+            </div>
+            <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                <div style="font-size: 12px; color: #999; margin-bottom: 5px; font-weight: bold;">💣 穿帮镜头 (NG)</div>
+                <textarea id="ng" rows="2" placeholder="遗憾或未完成的事..." style="width: 100%; border: none; background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 14px; font-family: inherit;"></textarea>
+            </div>
+            <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                <div style="font-size: 12px; color: #999; margin-bottom: 5px; font-weight: bold;">💡 导演思考 (Thinking)</div>
+                <textarea id="thinking" rows="2" placeholder="下周剧本优化方案..." style="width: 100%; border: none; background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 14px; font-family: inherit;"></textarea>
+            </div>
+
+            <div style="font-size: 16px; font-weight: 600; margin: 25px 0 10px 0;">🧠 AI 洞察</div>
+            <button class="ai-btn" onclick="callAI()">
+                <span id="ai-btn-text">✨ 呼叫 DeepSeek 分析数据</span>
+            </button>
+            <div id="ai-output" class="ai-result"></div>
+        </div>
+
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchPage('matrix', this)">
+            <span class="nav-icon">📊</span>四象限
+        </div>
+        <div class="nav-item" onclick="switchPage('weekly', this)">
+            <span class="nav-icon">📝</span>周复盘
+        </div>
+    </div>
+
+    <script>
+        // 数据结构
+        const quadrants = {
+            'iu': { name: '重要且紧急', color: '#FF6B6B', tags: [], slots: {} },
+            'in': { name: '重要不紧急', color: '#4ECDC4', tags: [], slots: {} },
+            'nu': { name: '不重要但紧急', color: '#FFE66D', tags: [], slots: {} },
+            'nn': { name: '不重要不紧急', color: '#95E1D3', tags: [], slots: {} }
+        };
+        let selectedTag = null;
+        let selectedQuadrant = null;
+        let currentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        let review = { highlight: '', ng: '', thinking: '' };
+
+        // 初始化
+        async function init() {
+            updateDate();
+            document.getElementById('userInput').value = currentUserId;
+            
+            // 尝试从本地加载数据
+            await loadLocalData();
+            renderAllQuadrants();
+        }
+
+        function updateDate() {
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const date = today.getDate();
+            const days = ['日', '一', '二', '三', '四', '五', '六'];
+            const dayName = days[today.getDay()];
+            document.getElementById('dateStr').innerText = `${month}月${date}日 周${dayName}`;
+        }
+
+        // 本地存储加载
+        async function loadLocalData() {
+            try {
+                const saved = localStorage.getItem('life-script-data');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    Object.assign(quadrants, data.quadrants || {});
+                    review = data.review || review;
+                    Object.keys(quadrants).forEach(q => {
+                        document.getElementById('highlight').value = review.highlight || '';
+                        document.getElementById('ng').value = review.ng || '';
+                        document.getElementById('thinking').value = review.thinking || '';
+                    });
+                }
+            } catch (e) {
+                console.warn('Load local data error:', e);
+            }
+        }
+
+        // 保存本地数据
+        async function saveLocalData() {
+            try {
+                review.highlight = document.getElementById('highlight')?.value || '';
+                review.ng = document.getElementById('ng')?.value || '';
+                review.thinking = document.getElementById('thinking')?.value || '';
+                const data = { quadrants, review };
+                localStorage.setItem('life-script-data', JSON.stringify(data));
+            } catch (e) {
+                console.warn('Save local data error:', e);
+            }
+        }
+
+        // Flomo 式标签处理
+        function handleTagInput(e, quadrant) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTagForQuadrant(quadrant);
+            }
+        }
+
+        function addTagForQuadrant(quadrant) {
+            const input = document.getElementById(`input-${quadrant}`);
+            let tagName = input.value.trim();
+            
+            // 移除 # 符号如果存在
+            if (tagName.startsWith('#')) tagName = tagName.slice(1);
+            
+            if (tagName && !quadrants[quadrant].tags.some(t => t.name === tagName)) {
+                quadrants[quadrant].tags.push({ name: tagName, selected: false });
+                input.value = '';
+                saveLocalData();
+                renderQuadrant(quadrant);
+            }
+        }
+
+        function renderQuadrant(q) {
+            const tagContainer = document.getElementById(`tags-${q}`);
+            tagContainer.innerHTML = '';
+            
+            quadrants[q].tags.forEach((tag, idx) => {
+                const tagEl = document.createElement('div');
+                tagEl.className = 'tag';
+                tagEl.style.background = quadrants[q].color;
+                tagEl.style.color = q === 'nu' ? '#333' : 'white';
+                if (tag.selected) tagEl.classList.add('selected');
+                tagEl.innerText = '#' + tag.name;
+                tagEl.onclick = () => {
+                    tag.selected = !tag.selected;
+                    saveLocalData();
+                    renderQuadrant(q);
+                };
+                tagContainer.appendChild(tagEl);
+            });
+        }
+
+        function renderAllQuadrants() {
+            Object.keys(quadrants).forEach(q => renderQuadrant(q));
+        }
+
+        function startGame() {
+            document.getElementById('intro-layer').style.opacity = 0;
+            setTimeout(() => document.getElementById('intro-layer').style.display = 'none', 600);
+        }
+
+        function switchPage(page, navEl) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            navEl.classList.add('active');
+            document.getElementById('pageTitle').innerText = (page === 'matrix') ? '四象限管理' : '导演复盘';
+        }
+
+        async function syncWithServer() {
+            currentUserId = document.getElementById('userInput').value || currentUserId;
+            try {
+                review.highlight = document.getElementById('highlight')?.value || '';
+                review.ng = document.getElementById('ng')?.value || '';
+                review.thinking = document.getElementById('thinking')?.value || '';
+
+                const response = await fetch(`/api/data/${currentUserId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quadrants, review })
+                });
+                if (response.ok) {
+                    await saveLocalData();
+                    alert('✅ 已同步到服务器！');
+                } else alert('❌ 同步失败');
+            } catch (err) {
+                alert('❌ 连接服务器失败：' + err.message);
+            }
+        }
+
+        async function exportAsImage() {
+            const element = document.querySelector('.page.active');
+            const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            const filename = `life-script-${new Date().toISOString().slice(0,10)}.png`;
+            link.download = filename;
+            link.click();
+        }
+
+        function callAI() {
+            const btn = document.getElementById('ai-btn-text');
+            const output = document.getElementById('ai-output');
+            btn.innerText = "⏳ 正在分析剧本...";
+            output.style.display = 'none';
+            
+            // 调用后端 DeepSeek API
+            fetch(`/api/analyze/${currentUserId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quadrants, review })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.innerText = "✨ 分析完成";
+                output.style.display = 'block';
+                output.innerHTML = `<strong>🤖 DeepSeek 分析：</strong><br>${data.analysis}`;
+                document.querySelector('#page-weekly').scrollTop = 1000;
+            })
+            .catch(err => {
+                btn.innerText = "✨ 分析失败";
+                output.style.display = 'block';
+                output.innerHTML = `<strong>⚠️ 错误：</strong><br>${err.message}`;
+            });
+        }
+
+        // 自动保存（间隔）
+        setInterval(saveLocalData, 30000);
+        window.addEventListener('beforeunload', saveLocalData);
+        
+        init();
+        
+        // 注册 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => console.log('[PWA] Service Worker 已注册'))
+                .catch(err => console.log('[PWA] Service Worker 注册失败:', err));
+        }
+    </script>
+</body>
+</html>

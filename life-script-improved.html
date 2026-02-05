@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="人生脚本">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/your-repo/icon.png">
+    <title>人生脚本 v2 - 剧本时间管理</title>
+    <style>
+        :root {
+            --bg: #F9FBFB;
+            --text: #333;
+            --sub: #999;
+            --accent: #6C5CE7;
+            --health: #AECBFA;
+            --family: #FDE293;
+            --work: #CCF0DF;
+            --growth: #D4BBFF;
+            --success: #D4F4DD;
+            --danger: #F8D7DA;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid #eee;
+        }
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--accent);
+            margin: 0 0 5px 0;
+        }
+        .header-tagline {
+            font-size: 12px;
+            color: var(--sub);
+            margin: 0 0 10px 0;
+        }
+        .week-info {
+            font-size: 12px;
+            color: var(--text);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #eee;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--sub);
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .tab-btn.tools {
+            margin-left: auto;
+            flex: 0 0 auto;
+            color: #666;
+        }
+        .tab-btn.tools:hover {
+            color: var(--accent);
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* ===== 周计划视图 ===== */
+        .week-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            font-size: 11px;
+        }
+        .week-table th, .week-table td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            height: 30px;
+        }
+        .week-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        .week-cell {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .week-cell:hover {
+            opacity: 0.8;
+        }
+        .task-health { background: var(--health); }
+        .task-family { background: var(--family); }
+        .task-work { background: var(--work); }
+        .task-growth { background: var(--growth); }
+
+        /* ===== 今日打卡 ===== */
+        .today-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .time-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            cursor: pointer;
+        }
+        .time-slot:hover {
+            border-color: var(--accent);
+        }
+        .slot-info { flex: 1; }
+        .slot-time {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .slot-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #f0f0f0;
+        }
+        .slot-status {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .slot-status.done { background: var(--success); border-color: #4caf50; }
+        .slot-status.fail { background: var(--danger); border-color: #dc3545; }
+
+        /* ===== 周审视 ===== */
+        .stats-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent);
+        }
+        .stats-box h3 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+        }
+        .category-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+        .category-stat-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .category-stat-value {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .completion-rate {
+            font-size: 12px;
+            color: var(--sub);
+        }
+        .insight-text {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.6;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        /* ===== 周审视表格 ===== */
+        .review-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            font-size: 11px;
+            margin-bottom: 20px;
+        }
+        .review-table th, .review-table td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            height: 30px;
+        }
+        .review-table th {
+            background: #f5f5f5;
+        }
+        .review-cell {
+            background: #f0f0f0;
+        }
+        .review-cell.done {
+            background: var(--success);
+        }
+        .review-cell.fail {
+            background: var(--danger);
+        }
+
+        /* ===== 复盘思考 ===== */
+        .review-section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent);
+        }
+        .review-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .review-section textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .review-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-analyze, .btn-save {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-analyze {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-save {
+            background: #eee;
+        }
+        .analysis-result {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid var(--work);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            display: none;
+            font-size: 13px;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-box h3 {
+            margin: 0 0 15px 0;
+        }
+        .category-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .cat-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .cat-btn.selected {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.1);
+        }
+        .category-hint {
+            font-size: 11px;
+            color: var(--sub);
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        .tag-history {
+            margin-bottom: 10px;
+            display: none;
+        }
+        .tag-history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tag-history-btn {
+            padding: 4px 10px;
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-confirm {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-cancel {
+            background: #eee;
+        }
+
+        /* ===== 导入导出 ===== */
+        .io-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .io-btn {
+            padding: 10px 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .io-btn:hover {
+            background: #f5f5f5;
+        }
+        #import-file {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title">人生脚本 v2</div>
+    <div class="header-tagline">你是你人生的导演 · 每一天都要精彩的活</div>
+    <div class="week-info" id="week-info">
+        <span>2026年第2周 · 1月6日 ~ 1月12日</span>
+    </div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('plan')">📅 周计划</button>
+        <button class="tab-btn" onclick="switchTab('today')">✅ 今日打卡</button>
+        <button class="tab-btn" onclick="switchTab('review')">📊 周复盘</button>
+        <button class="tab-btn tools" onclick="showTools()">⚙️ 工具</button>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 周计划 -->
+    <div class="view active" id="plan-view">
+        <div style="margin-bottom: 15px; display: none;" id="quick-fill-bar">
+            <div style="background: white; padding: 12px; border-radius: 10px; border-left: 4px solid var(--accent);">
+                <div style="font-size: 12px; color: var(--sub); margin-bottom: 8px;">✨ 快速排班模式</div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span id="quick-fill-tag" style="font-weight: 600;">已选择：</span>
+                    <button style="padding: 6px 12px; background: #eee; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 12px;" onclick="exitQuickFill()">✕ 退出快速模式</button>
+                    <button style="padding: 6px 12px; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: auto;" onclick="confirmQuickFill()">✓ 确认填充</button>
+                </div>
+            </div>
+        </div>
+        <table class="week-table" id="week-table">
+            <tr>
+                <th>时间</th>
+                <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 今日打卡 -->
+    <div class="view" id="today-view">
+        <div style="margin-bottom: 15px; background: white; padding: 12px; border-radius: 10px;">
+            <div style="font-size: 12px; color: var(--sub); margin-bottom: 8px;">📅 选择日期</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="date-btn active" onclick="switchCheckinDay(-1)" style="padding: 8px 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 12px;">📍 今日</button>
+                <button class="date-btn" onclick="switchCheckinDay(0)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周一</button>
+                <button class="date-btn" onclick="switchCheckinDay(1)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周二</button>
+                <button class="date-btn" onclick="switchCheckinDay(2)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周三</button>
+                <button class="date-btn" onclick="switchCheckinDay(3)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周四</button>
+                <button class="date-btn" onclick="switchCheckinDay(4)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周五</button>
+                <button class="date-btn" onclick="switchCheckinDay(5)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周六</button>
+                <button class="date-btn" onclick="switchCheckinDay(6)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周日</button>
+            </div>
+        </div>
+        <div class="today-grid" id="today-grid"></div>
+    </div>
+
+    <!-- 周审视 -->
+    <!-- 周复盘（统一视图） -->
+    <div class="view" id="review-view">
+        <!-- 第一部分：周计划表 -->
+        <div style="margin-bottom: 30px;">
+            <h2 style="margin: 0 0 15px 0; color: var(--accent); font-size: 16px;">📋 本周执行情况</h2>
+            <table class="review-table" id="review-table">
+                <tr>
+                    <th>时间</th>
+                    <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th>
+                </tr>
+            </table>
+            <button class="io-btn" style="margin-top: 10px; width: 100%; background: #FF6B6B; color: white;" onclick="generateShareCard('weekplan')">📸 分享本周计划</button>
+        </div>
+
+        <!-- 第二部分：数据分析 -->
+        <div class="stats-box">
+            <h3>📊 本周数据分析</h3>
+            <div id="stats-content"></div>
+            <button class="io-btn" style="margin-top: 10px; width: 100%; background: #FF6B6B; color: white;" onclick="generateShareCard('analysis')">📸 分享数据分析</button>
+        </div>
+
+        <!-- 第三部分：AI洞察 -->
+        <div class="stats-box">
+            <h3>💡 AI洞察</h3>
+            <div id="ai-insight" class="insight-text">完成一些任务后会显示</div>
+            <button id="deep-analyze-btn" onclick="requestDeepAnalysis()" style="width: 100%; margin-top: 15px; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🤖 生活洞察深度分析</button>
+            <div id="ai-deep-insight" style="margin-top: 15px; display: none; background: white; padding: 15px; border-radius: 8px; border-left: 4px solid var(--growth); line-height: 1.6; white-space: pre-wrap; font-size: 13px; color: #333;"></div>
+            <button class="io-btn" style="margin-top: 10px; width: 100%; background: #FF6B6B; color: white;" onclick="generateShareCard('aiinsight')">📸 分享AI分析</button>
+        </div>
+
+        <!-- 第四部分：复盘思考 -->
+        <div style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 30px;">
+            <h2 style="margin: 0 0 20px 0; color: var(--accent); font-size: 16px;">✍️ 周复盘思考</h2>
+            
+            <div class="review-section">
+                <h3>✅ 本周做得很好的事</h3>
+                <textarea id="review-good" placeholder="例如：坚持晨跑..."></textarea>
+            </div>
+            <div class="review-section">
+                <h3>❌ 本周没做好的地方</h3>
+                <textarea id="review-bad" placeholder="例如：周末没有陪伴家人..."></textarea>
+            </div>
+            <div class="review-section">
+                <h3>💡 下周的改进计划</h3>
+                <textarea id="review-next" placeholder="例如：调整时间安排..."></textarea>
+            </div>
+            <div class="review-buttons">
+                <button class="btn-analyze" onclick="generateAnalysis()">✨ 生成完整分析</button>
+                <button class="io-btn" style="background: #FF6B6B; color: white;" onclick="generateShareCard('reflection')">📸 分享复盘思考</button>
+            </div>
+            <div class="analysis-result" id="analysis-result"></div>
+        </div>
+
+        <!-- 第五部分：分享选项 -->
+        <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 10px; text-align: center;">
+            <h3 style="margin-top: 0;">🎯 一键分享完整周报</h3>
+            <button class="io-btn" style="width: 100%; background: var(--accent); color: white; font-weight: 600; font-size: 14px;" onclick="showShareOptions()">🚀 选择分享内容</button>
+        </div>
+    </div>
+
+    <!-- 移除旧的反思 view -->
+    <!-- 工具面板 -->
+    <div class="view" id="tools-view">
+        <div class="io-buttons">
+            <button class="io-btn" onclick="exportData()">📥 导出数据</button>
+            <button class="io-btn" onclick="document.getElementById('import-file').click()">📤 导入数据</button>
+            <button class="io-btn" style="background: #FF6B6B; color: white;" onclick="generateShareCard()">📸 生成分享卡片</button>
+            <button class="io-btn" onclick="clearAllData()" style="color: #dc3545;">🗑️ 清空所有</button>
+        </div>
+        <div id="share-card-preview" style="display: none; background: white; padding: 20px; border-radius: 10px; margin-top: 20px;">
+            <div id="card-canvas-container" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 20px; color: white; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+                <div style="font-size: 28px; font-weight: 700; margin-bottom: 15px;">📊 我的周报</div>
+                <div id="card-stats" style="text-align: left; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; font-size: 14px;"></div>
+                <div style="font-size: 12px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">✨ 用「人生脚本」记录你的成长</div>
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button onclick="downloadShareCard()" style="flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">💾 下载图片</button>
+                <button onclick="closeShareCardPreview()" style="flex: 1; padding: 12px; background: #eee; border: none; border-radius: 8px; cursor: pointer;">关闭</button>
+            </div>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px; margin-top: 20px;">
+            <h3 style="margin-top: 0;">使用说明</h3>
+            <p>✅ <strong>周计划</strong> - 制定本周的计划，点击格子添加任务</p>
+            <p>✅ <strong>今日打卡</strong> - 标记今天的完成情况（⭕计划中 → ✅已完成 → ❌未完成）</p>
+            <p>✅ <strong>周审视</strong> - 查看本周的执行情况、数据分析和AI洞察</p>
+            <p>✅ <strong>复盘思考</strong> - 反思与总结，生成完整的周报告</p>
+            <p>✅ <strong>导入导出</strong> - 备份和恢复数据，支持多设备同步</p>
+        </div>
+    </div>
+</div>
+
+<!-- 任务编辑模态 -->
+<div class="modal" id="task-modal">
+    <div class="modal-box">
+        <h3>编辑任务</h3>
+        <h4 id="modal-time" style="color: var(--sub); margin: 0 0 15px 0;">周一 7:00</h4>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; display: block; margin-bottom: 8px;">选择类别</label>
+            <div class="category-selector">
+                <button class="cat-btn" onclick="selectCategory('health')">🔵 健康习惯</button>
+                <button class="cat-btn" onclick="selectCategory('family')">🟡 家庭时间</button>
+                <button class="cat-btn" onclick="selectCategory('work')">💚 工作时间</button>
+                <button class="cat-btn" onclick="selectCategory('growth')">💜 自我成长</button>
+            </div>
+        </div>
+        <div class="category-hint" id="category-hint"></div>
+        <div class="tag-history" id="tag-history">
+            <div style="font-size: 11px; color: var(--sub); margin-bottom: 6px;">📚 你之前用过的标签</div>
+            <div class="tag-history-list" id="tag-history-list"></div>
+        </div>
+        <input type="text" class="modal-input" id="task-tag" placeholder="输入活动标签">
+        <div class="modal-buttons">
+            <button class="btn-confirm" onclick="saveTask()">✓ 确认</button>
+            <button style="flex: 1; padding: 10px; background: var(--work); color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="enterQuickFill()">⚡ 快速排班</button>
+            <button class="btn-cancel" onclick="closeModal()">✕ 取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 跳过原因选择模态 -->
+<div class="modal" id="skip-reason-modal">
+    <div class="modal-box">
+        <h3>⏭️ 标记原因</h3>
+        <h4 id="skip-task-info" style="color: var(--sub); margin: 0 0 15px 0;">周一 7:00</h4>
+        <div style="margin-bottom: 15px;">
+            <p style="font-size: 12px; color: var(--text); margin: 0 0 12px 0;">这项任务没有完成是因为...</p>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="skip-btn" onclick="saveSkipReason('overtime', '加班/工作加重')" style="padding: 12px; border: 2px solid #ddd; background: white; border-radius: 8px; cursor: pointer; text-align: left;">
+                    <div style="font-weight: 600;">⏰ 加班/工作加重</div>
+                    <div style="font-size: 11px; color: var(--sub);">因为工作量突然增加</div>
+                </button>
+                <button class="skip-btn" onclick="saveSkipReason('rest', '需要休息')" style="padding: 12px; border: 2px solid #ddd; background: white; border-radius: 8px; cursor: pointer; text-align: left;">
+                    <div style="font-weight: 600;">😴 需要休息</div>
+                    <div style="font-size: 11px; color: var(--sub);">身体疲劳，优先睡眠</div>
+                </button>
+                <button class="skip-btn" onclick="saveSkipReason('emergency', '临时突发')" style="padding: 12px; border: 2px solid #ddd; background: white; border-radius: 8px; cursor: pointer; text-align: left;">
+                    <div style="font-weight: 600;">🚨 临时突发事件</div>
+                    <div style="font-size: 11px; color: var(--sub);">突发的紧急情况</div>
+                </button>
+                <button class="skip-btn" onclick="saveSkipReason('other', '其他原因')" style="padding: 12px; border: 2px solid #ddd; background: white; border-radius: 8px; cursor: pointer; text-align: left;">
+                    <div style="font-weight: 600;">❓ 其他原因</div>
+                    <div style="font-size: 11px; color: var(--sub);">请在下面说明</div>
+                </button>
+            </div>
+        </div>
+        <input type="text" class="modal-input" id="skip-reason-detail" placeholder="(可选) 详细说明原因" style="display: none;">
+        <div class="modal-buttons">
+            <button class="btn-confirm" id="skip-confirm-btn" onclick="confirmSkipReason()" style="display: none;">✓ 确认</button>
+            <button class="btn-cancel" onclick="closeSkipReasonModal()">✕ 关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 分享选项模态 -->
+<div class="modal" id="share-options-modal">
+    <div class="modal-box" style="max-width: 500px;">
+        <h3>🚀 分享你的周报</h3>
+        <p style="color: var(--sub); margin: 0 0 15px 0; font-size: 13px;">选择要分享的内容类型</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="share-type" value="table" checked style="margin-right: 10px;"> 
+                <div>
+                    <div style="font-weight: 600;">📊 本周执行情况表</div>
+                    <div style="font-size: 11px; color: var(--sub);">你这周详细的任务完成情况</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="share-type" value="combined" style="margin-right: 10px;"> 
+                <div>
+                    <div style="font-weight: 600;">📋 完整周报（合并）</div>
+                    <div style="font-size: 11px; color: var(--sub);">表格 + 数据分析 + 复盘思考（一张长图）</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="share-type" value="analysis" style="margin-right: 10px;"> 
+                <div>
+                    <div style="font-weight: 600;">📈 数据分析卡片</div>
+                    <div style="font-size: 11px; color: var(--sub);">本周各类别的完成度统计</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; padding: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="share-type" value="reflection" style="margin-right: 10px;"> 
+                <div>
+                    <div style="font-weight: 600;">✍️ 周复盘思考</div>
+                    <div style="font-size: 11px; color: var(--sub);">你的反思与改进计划</div>
+                </div>
+            </label>
+        </div>
+
+        <div class="modal-buttons">
+            <button class="btn-confirm" onclick="previewShareCard()">👁️ 预览</button>
+            <button class="btn-cancel" onclick="closeShareOptions()">✕ 取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 分享预览模态 -->
+<div class="modal" id="share-preview-modal">
+    <div class="modal-box" style="max-width: 600px;">
+        <h3>📱 分享预览</h3>
+        <div id="share-preview-content" style="margin: 20px 0; text-align: center;">
+            <img id="share-preview-image" src="" style="max-width: 100%; max-height: 600px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-confirm" onclick="downloadPreviewCard()">💾 下载图片</button>
+            <button class="btn-cancel" onclick="closeSharePreview()">✕ 关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 分类编辑模态 -->
+<div class="modal" id="edit-categories-modal">
+    <div class="modal-box" style="max-width: 600px;">
+        <h3>✏️ 编辑分类</h3>
+        <p style="color: var(--sub); margin: 0 0 20px 0; font-size: 13px;">自定义你的时间分类（前4个必填，可以添加第5个）</p>
+        <div id="edit-categories-content" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+        </div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="io-btn" onclick="addCategoryField()" style="background: #4CAF50; color: white; width: 100%;">➕ 添加新分类</button>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-confirm" onclick="saveCategories()">✓ 保存</button>
+            <button class="btn-cancel" onclick="closeEditCategoriesModal()">✕ 取消</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="import-file" accept=".json" onchange="importData(event)">
+
+<script>
+const HOURS = Array.from({length: 17}, (_, i) => i + 7);
+const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const CATEGORIES = {
+    health: { name: '健康习惯', emoji: '🔵', hint: '🎭 懒虫 | 跑步狂 | 瑜伽仙女 | 冥想者 | 睡眠卫士' },
+    family: { name: '家庭时间', emoji: '🟡', hint: '🎭 陪伴侠 | 家务卫士 | 奶爸奶妈 | 做饭大厨 | 故事讲述者' },
+    work: { name: '工作时间', emoji: '💚', hint: '🎭 打工狗 | 写作家 | 代码侠 | 会议达人 | 项目经理' },
+    growth: { name: '自我成长', emoji: '💜', hint: '🎭 阅读虫 | 思考者 | 学习者 | 日记作家 | 知识猎人' }
+};
+
+let weekData = { tasks: {}, review: { good: '', bad: '', next: '' }, skipReasons: {} };
+let tagCategoryMap = {}; // 记录标签对应的类别
+let tagHistory = { health: [], family: [], work: [], growth: [] };
+let selectedCategory = null;
+let selectedSlot = null;
+let quickFillMode = false;
+let quickFillData = null;
+let checkinDay = -1; // -1 表示今日，0-6 表示周一到周日
+let pendingSkipKey = null; // 等待保存跳过原因的任务 key
+let selectedSkipReason = null; // 选择的跳过原因
+let currentShareType = null; // 当前分享的卡片类型
+let editingCategoriesTemp = null; // 编辑分类时的临时变量
+let appConfigCategories = null; // 动态分类配置（支持任意数量）
+let isFirstTime = false; // 是否第一次使用
+
+// 初始化
+function init() {
+    loadData();
+    
+    // 如果第一次使用，显示分类设置对话框
+    if (isFirstTime || !appConfigCategories || appConfigCategories.length === 0) {
+        showInitialCategorySetup();
+    } else {
+        updateWeekInfo();
+        renderWeekPlan();
+        renderTodayView();
+        renderWeekReview();
+        loadReviewData();
+    }
+}
+
+function showInitialCategorySetup() {
+    // 显示首次设置模态框
+    document.getElementById('edit-categories-modal').classList.add('show');
+    document.getElementById('edit-categories-modal').innerHTML = `
+        <div class="modal-box" style="max-width: 600px;">
+            <h3>👋 欢迎！请先设置你的时间分类</h3>
+            <p style="color: var(--sub); margin: 0 0 20px 0; font-size: 13px;">自定义你的时间分类（前4个必填，可以添加更多）</p>
+            <div id="edit-categories-content" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+            </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button class="io-btn" onclick="addCategoryField()" style="background: #4CAF50; color: white; width: 100%;">➕ 添加新分类</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-confirm" onclick="saveCategories()">✓ 开始使用</button>
+            </div>
+        </div>
+    `;
+    
+    // 初始化 appConfigCategories，如果为空则使用默认值
+    if (!appConfigCategories || appConfigCategories.length === 0) {
+        appConfigCategories = [
+            { name: '健康习惯', emoji: '🔵', color: '#AECBFA' },
+            { name: '家庭时间', emoji: '🟡', color: '#FDE293' },
+            { name: '工作时间', emoji: '💚', color: '#CCF0DF' },
+            { name: '自我成长', emoji: '💜', color: '#D4BBFF' }
+        ];
+    }
+    
+    renderCategoryEditors();
+}
+
+function renderCategoryEditors() {
+    let html = '';
+    appConfigCategories.forEach((cat, idx) => {
+        html += `
+            <div class="category-input-group" style="margin-bottom: 15px; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <label class="category-input-label" style="display: block; margin-bottom: 10px; font-weight: 600;">分类 ${idx + 1} ${idx < 4 ? '(必填)' : '(可选)'}</label>
+                <div style="display: grid; grid-template-columns: 60px 1fr 80px; gap: 10px;">
+                    <input type="text" id="edit-emoji-${idx}" placeholder="🔵" value="${cat.emoji}" maxlength="2" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 20px; text-align: center;">
+                    <input type="text" id="edit-name-${idx}" placeholder="分类名称" value="${cat.name}" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                    <input type="color" id="edit-color-${idx}" value="${cat.color}" style="padding: 4px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+                </div>
+                ${idx >= 4 ? `<button onclick="removeCategoryField(${idx})" style="margin-top: 8px; padding: 6px 12px; background: #FF6B6B; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">删除</button>` : ''}
+            </div>
+        `;
+    });
+    document.getElementById('edit-categories-content').innerHTML = html;
+}
+
+function addCategoryField() {
+    if (!appConfigCategories) appConfigCategories = [];
+    appConfigCategories.push({ 
+        name: `分类${appConfigCategories.length + 1}`, 
+        emoji: '⭕', 
+        color: '#E8E8E8' 
+    });
+    renderCategoryEditors();
+}
+
+function removeCategoryField(idx) {
+    if (idx >= 4) {
+        appConfigCategories.splice(idx, 1);
+        renderCategoryEditors();
+    }
+}
+
+function loadData() {
+    const stored = localStorage.getItem('life-script-data');
+    if (stored) {
+        try {
+            const data = JSON.parse(stored);
+            weekData = data.weekData || weekData;
+            tagCategoryMap = data.tagCategoryMap || tagCategoryMap;
+            tagHistory = data.tagHistory || tagHistory;
+            appConfigCategories = data.appConfigCategories || null;
+        } catch (e) {
+            console.error('加载数据失败:', e);
+        }
+    }
+    
+    // 如果没有保存过分类配置，则标记为首次使用
+    if (!appConfigCategories) {
+        isFirstTime = true;
+    }
+}
+
+function saveData() {
+    const data = { weekData, tagCategoryMap, tagHistory, appConfigCategories };
+    localStorage.setItem('life-script-data', JSON.stringify(data));
+}
+
+function getWeekNumber(date) {
+    const year = date.getFullYear();
+    const firstDay = new Date(year, 0, 1);
+    const pastDaysOfYear = (date - firstDay) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDay.getDay() + 1) / 7);
+}
+
+function getWeekDateRange() {
+    const now = new Date();
+    const dayOfWeek = now.getDay() || 7;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dayOfWeek + 1);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    const formatDate = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+    return `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+}
+
+function updateWeekInfo() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const firstDay = new Date(year, 0, 1);
+    const pastDaysOfYear = (now - firstDay) / 86400000;
+    const week = Math.ceil((pastDaysOfYear + firstDay.getDay() + 1) / 7);
+    
+    const dayOfWeek = now.getDay() || 7;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dayOfWeek + 1);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const startMonth = weekStart.getMonth() + 1;
+    const startDate = weekStart.getDate();
+    const endMonth = weekEnd.getMonth() + 1;
+    const endDate = weekEnd.getDate();
+
+    document.getElementById('week-info').textContent = 
+        `${year}年第${week}周 · ${startMonth}月${startDate}日 ~ ${endMonth}月${endDate}日`;
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const viewMap = {
+        plan: 'plan-view',
+        today: 'today-view',
+        review: 'review-view',
+        tools: 'tools-view'
+    };
+    
+    if (viewMap[tab]) {
+        document.getElementById(viewMap[tab]).classList.add('active');
+        document.querySelector(`.tab-btn[onclick*="'${tab}'"]`).classList.add('active');
+    }
+}
+
+function showTools() {
+    switchTab('tools');
+}
+
+function renderWeekPlan() {
+    let html = '<tr><th>时间</th>';
+    DAYS.forEach(d => html += `<th>${d}</th>`);
+    html += '</tr>';
+    
+    HOURS.forEach(hour => {
+        html += `<tr><td style="background: #f5f5f5; font-weight: 500;">${hour}:00</td>`;
+        for (let day = 0; day < 7; day++) {
+            const key = `${day}-${hour}`;
+            const task = weekData.tasks[key];
+            if (task) {
+                html += `<td class="week-cell task-${task.category}" onclick="handleWeekCellClick(${day}, ${hour})">${task.tag}</td>`;
+            } else {
+                html += `<td class="week-cell" onclick="handleWeekCellClick(${day}, ${hour})"></td>`;
+            }
+        }
+        html += '</tr>';
+    });
+    document.getElementById('week-table').innerHTML = html;
+}
+
+function handleWeekCellClick(day, hour) {
+    if (quickFillMode) {
+        // 快速排班模式：点击填充
+        const key = `${day}-${hour}`;
+        weekData.tasks[key] = { 
+            category: quickFillData.category, 
+            tag: quickFillData.tag, 
+            status: 'plan' 
+        };
+        renderWeekPlan();
+    } else {
+        // 普通模式：打开编辑框
+        openEditModal(day, hour);
+    }
+}
+
+function renderWeekReview() {
+    let html = '<tr><th>时间</th>';
+    DAYS.forEach(d => html += `<th>${d}</th>`);
+    html += '</tr>';
+    
+    HOURS.forEach(hour => {
+        html += `<tr><td style="background: #f5f5f5;">${hour}:00</td>`;
+        for (let day = 0; day < 7; day++) {
+            const key = `${day}-${hour}`;
+            const task = weekData.tasks[key];
+            let cellClass = 'review-cell';
+            let content = '';
+            
+            if (task) {
+                if (task.status === 'done') {
+                    cellClass = 'review-cell done';
+                    content = '✅';
+                } else if (task.status === 'fail') {
+                    // 检查是否有跳过原因（特殊情况，不算真正的失败）
+                    const hasReason = weekData.skipReasons && weekData.skipReasons[key];
+                    if (hasReason) {
+                        cellClass = 'review-cell skip';
+                        content = '⏭️'; // 显示"跳过"而不是"失败"
+                        cellClass += ' skip-reason'; // 添加特殊样式
+                    } else {
+                        cellClass = 'review-cell fail';
+                        content = '❌';
+                    }
+                } else {
+                    cellClass = 'review-cell';
+                    content = '⭕';
+                }
+            }
+            html += `<td class="${cellClass}" title="${weekData.skipReasons && weekData.skipReasons[key] ? weekData.skipReasons[key].label : ''}">${content}</td>`;
+        }
+        html += '</tr>';
+    });
+    document.getElementById('review-table').innerHTML = html;
+    
+    // 更新统计数据
+    updateStats();
+}
+
+function updateStats() {
+    const stats = {
+        health: { total: 0, done: 0, skip: 0 },
+        family: { total: 0, done: 0, skip: 0 },
+        work: { total: 0, done: 0, skip: 0 },
+        growth: { total: 0, done: 0, skip: 0 }
+    };
+
+    Object.entries(weekData.tasks).forEach(([key, task]) => {
+        if (stats[task.category]) {
+            // 有跳过原因的失败任务不算在总数里
+            const hasSkipReason = weekData.skipReasons && weekData.skipReasons[key];
+            if (!hasSkipReason) {
+                stats[task.category].total++;
+            }
+            
+            if (task.status === 'done') {
+                stats[task.category].done++;
+            } else if (hasSkipReason) {
+                stats[task.category].skip++;
+            }
+        }
+    });
+
+    let html = '';
+    let totalTasks = 0;
+    let totalDone = 0;
+    let totalSkip = 0;
+
+    Object.entries(stats).forEach(([cat, data]) => {
+        totalTasks += data.total;
+        totalDone += data.done;
+        totalSkip += data.skip;
+        const percentage = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0;
+        html += `
+            <div class="category-stat">
+                <div class="category-stat-label">
+                    <span>${CATEGORIES[cat].emoji}</span>
+                    <span>${CATEGORIES[cat].name}</span>
+                </div>
+                <div style="text-align: right;">
+                    <div class="category-stat-value">${percentage}%</div>
+                    <div class="completion-rate">${data.done}/${data.total}${data.skip > 0 ? ` (跳过${data.skip})` : ''}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    document.getElementById('stats-content').innerHTML = html;
+
+    // 生成AI洞察
+    generateInsight(stats, totalTasks, totalDone, totalSkip);
+}
+
+function generateInsight(stats, totalTasks, totalDone, totalSkip = 0) {
+    if (totalTasks === 0) {
+        document.getElementById('ai-insight').textContent = '还没有任务，赶快规划你的一周吧！';
+        return;
+    }
+
+    const overallRate = Math.round((totalDone / totalTasks) * 100);
+    const categories = Object.entries(stats).sort((a, b) => {
+        const rateA = a[1].total > 0 ? (a[1].done / a[1].total) * 100 : 0;
+        const rateB = b[1].total > 0 ? (b[1].done / b[1].total) * 100 : 0;
+        return rateB - rateA;
+    });
+
+    let insight = `📊 你的本周成绩：${overallRate}%\n\n`;
+
+    // 最高分类别
+    const top = categories[0];
+    if (top[1].total > 0) {
+        const topRate = Math.round((top[1].done / top[1].total) * 100);
+        if (topRate === 100) {
+            insight += `✨ 完美！${CATEGORIES[top[0]].name}完成率100%，你真是个行动力满满的人！\n\n`;
+        } else if (topRate >= 80) {
+            insight += `🌟 ${CATEGORIES[top[0]].name}的执行率最高（${topRate}%），保持这个势头！\n\n`;
+        }
+    }
+
+    // 时间占比分析
+    const totalHours = Object.values(stats).reduce((sum, s) => sum + s.total, 0);
+    insight += '⏰ 本周时间分配：\n';
+    Object.entries(stats).forEach(([cat, data]) => {
+        if (data.total > 0) {
+            const percent = Math.round((data.total / totalHours) * 100);
+            insight += `  • ${CATEGORIES[cat].name}：${percent}%\n`;
+        }
+    });
+
+    // 个性评价
+    const workPercent = stats.work.total > 0 ? Math.round((stats.work.total / totalHours) * 100) : 0;
+    const healthPercent = stats.health.total > 0 ? Math.round((stats.health.total / totalHours) * 100) : 0;
+    const growthPercent = stats.growth.total > 0 ? Math.round((stats.growth.total / totalHours) * 100) : 0;
+
+    insight += '\n💡 导演的评语：\n';
+    if (workPercent > 50) {
+        insight += `你可真是个"加班狂"，工作占比${workPercent}%！记得也要关照身体和家庭哦。`;
+    } else if (healthPercent > 40) {
+        insight += `你是个"健身达人"，对身体很用心！继续保持，但也要注重工作成长。`;
+    } else if (growthPercent > 40) {
+        insight += `你是个"学习狂魔"，自我提升很积极！棒极了，这就是成长的样子。`;
+    } else {
+        insight += `时间分配很均衡，你真是个有"剧本意识"的导演！`;
+    }
+
+    document.getElementById('ai-insight').textContent = insight;
+}
+
+function renderTodayView() {
+    const now = new Date();
+    let dayIndex = checkinDay === -1 ? (now.getDay() || 7) - 1 : checkinDay;
+    
+    let html = '';
+    
+    HOURS.forEach(hour => {
+        const key = `${dayIndex}-${hour}`;
+        const task = weekData.tasks[key];
+        if (task) {
+            const statusClass = task.status === 'done' ? 'done' : task.status === 'fail' ? 'fail' : '';
+            const status = task.status === 'done' ? '✅' : task.status === 'fail' ? '❌' : '⭕';
+            html += `
+                <div class="time-slot">
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div>${CATEGORIES[task.category].emoji} <span class="slot-tag">${task.tag}</span></div>
+                    </div>
+                    <div class="slot-status ${statusClass}" onclick="toggleStatus('${key}')">${status}</div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="time-slot" onclick="openEditModal(${dayIndex}, ${hour})">
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div style="color: #ccc;">未安排</div>
+                    </div>
+                    <div style="color: #999;">+</div>
+                </div>
+            `;
+        }
+    });
+    document.getElementById('today-grid').innerHTML = html;
+}
+
+function toggleStatus(key) {
+    const task = weekData.tasks[key];
+    const statuses = ['plan', 'done', 'fail'];
+    const idx = statuses.indexOf(task.status || 'plan');
+    const nextStatus = statuses[(idx + 1) % 3];
+    
+    // 如果要标记为失败，先显示原因选择窗口
+    if (nextStatus === 'fail') {
+        task.status = 'fail';
+        pendingSkipKey = key;
+        const [day, hour] = key.split('-').map(Number);
+        document.getElementById('skip-task-info').textContent = `${DAYS[day]} ${hour}:00 - ${task.tag}`;
+        document.getElementById('skip-reason-modal').classList.add('show');
+    } else {
+        task.status = nextStatus;
+        saveData();
+        renderWeekPlan();
+        renderTodayView();
+        renderWeekReview();
+    }
+}
+
+function saveSkipReason(reason, label) {
+    selectedSkipReason = reason;
+    document.querySelectorAll('.skip-btn').forEach(btn => btn.style.borderColor = '#ddd');
+    event.target.closest('button').style.borderColor = 'var(--accent)';
+    event.target.closest('button').style.backgroundColor = 'rgba(108, 92, 231, 0.05)';
+    
+    if (reason === 'other') {
+        document.getElementById('skip-reason-detail').style.display = 'block';
+        document.getElementById('skip-confirm-btn').style.display = 'block';
+    } else {
+        document.getElementById('skip-reason-detail').style.display = 'none';
+        document.getElementById('skip-confirm-btn').style.display = 'none';
+        confirmSkipReason();
+    }
+}
+
+function confirmSkipReason() {
+    if (!pendingSkipKey || !selectedSkipReason) return;
+    
+    const detail = document.getElementById('skip-reason-detail').value.trim();
+    if (selectedSkipReason === 'other' && !detail) {
+        alert('请说明其他原因');
+        return;
+    }
+    
+    const reasonLabels = {
+        'overtime': '加班/工作加重',
+        'rest': '需要休息',
+        'emergency': '临时突发事件',
+        'other': detail
+    };
+    
+    if (!weekData.skipReasons) {
+        weekData.skipReasons = {};
+    }
+    weekData.skipReasons[pendingSkipKey] = {
+        type: selectedSkipReason,
+        label: reasonLabels[selectedSkipReason],
+        timestamp: new Date().toISOString()
+    };
+    
+    saveData();
+    closeSkipReasonModal();
+    renderWeekPlan();
+    renderTodayView();
+    renderWeekReview();
+}
+
+function closeSkipReasonModal() {
+    document.getElementById('skip-reason-modal').classList.remove('show');
+    document.getElementById('skip-reason-detail').value = '';
+    document.getElementById('skip-reason-detail').style.display = 'none';
+    document.getElementById('skip-confirm-btn').style.display = 'none';
+    pendingSkipKey = null;
+    selectedSkipReason = null;
+}
+
+function openEditModal(day, hour) {
+    selectedSlot = { day, hour };
+    const key = `${day}-${hour}`;
+    const task = weekData.tasks[key];
+    
+    document.getElementById('modal-time').textContent = `${DAYS[day]} ${hour}:00`;
+    document.getElementById('task-tag').value = task ? task.tag : '';
+    
+    selectedCategory = task ? task.category : null;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    
+    if (selectedCategory) {
+        const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+        const catKeys = Object.keys(CATEGORIES);
+        const idx = catKeys.indexOf(selectedCategory);
+        if (idx >= 0 && buttons[idx]) {
+            buttons[idx].classList.add('selected');
+            updateCategoryHint(selectedCategory);
+        }
+    }
+    document.getElementById('task-modal').classList.add('show');
+}
+
+function selectCategory(cat) {
+    selectedCategory = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    
+    const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+    const catKeys = Object.keys(CATEGORIES);
+    const idx = catKeys.indexOf(cat);
+    if (idx >= 0 && buttons[idx]) {
+        buttons[idx].classList.add('selected');
+    }
+    
+    updateCategoryHint(cat);
+    updateTagHistory(cat);
+}
+
+function selectKnownTag(tag) {
+    // 自动检测标签对应的类别
+    if (tagCategoryMap[tag]) {
+        selectedCategory = tagCategoryMap[tag];
+        // 自动选中对应的类别按钮
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+        const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+        const catKeys = Object.keys(CATEGORIES);
+        const idx = catKeys.indexOf(selectedCategory);
+        if (idx >= 0 && buttons[idx]) {
+            buttons[idx].classList.add('selected');
+        }
+        updateCategoryHint(selectedCategory);
+    }
+    // 填充标签值
+    document.getElementById('task-tag').value = tag;
+    document.getElementById('task-tag').focus();
+}
+
+function updateCategoryHint(cat) {
+    document.getElementById('category-hint').textContent = CATEGORIES[cat].hint;
+}
+
+function updateTagHistory(cat) {
+    const history = tagHistory[cat] || [];
+    const historyDiv = document.getElementById('tag-history');
+    if (history.length > 0) {
+        historyDiv.style.display = 'block';
+        let html = '';
+        history.slice(-5).reverse().forEach(tag => {
+            html += `<button class="tag-history-btn" onclick="selectKnownTag('${tag.replace(/'/g, "\\'")}')">${tag}</button>`;
+        });
+        document.getElementById('tag-history-list').innerHTML = html;
+    } else {
+        historyDiv.style.display = 'none';
+    }
+}
+
+function saveTask() {
+    const tag = document.getElementById('task-tag').value.trim();
+    if (!tag) {
+        alert('请输入活动标签');
+        return;
+    }
+    
+    // 如果标签已知，自动识别类别
+    let category = selectedCategory;
+    if (!category && tagCategoryMap[tag]) {
+        category = tagCategoryMap[tag];
+    }
+    
+    if (!category) {
+        alert('请选择类别');
+        return;
+    }
+    
+    // 记录标签-类别对应
+    tagCategoryMap[tag] = category;
+    
+    // 更新标签历史
+    if (!tagHistory[category]) tagHistory[category] = [];
+    tagHistory[category] = tagHistory[category].filter(t => t !== tag);
+    tagHistory[category].push(tag);
+    if (tagHistory[category].length > 20) tagHistory[category].shift();
+    
+    const key = `${selectedSlot.day}-${selectedSlot.hour}`;
+    weekData.tasks[key] = { category: category, tag, status: 'plan' };
+    saveData();
+    renderWeekPlan();
+    renderTodayView();
+    renderWeekReview();
+    closeModal();
+}
+
+function closeModal() {
+    document.getElementById('task-modal').classList.remove('show');
+}
+
+function enterQuickFill() {
+    const tag = document.getElementById('task-tag').value.trim();
+    if (!tag) {
+        alert('请输入活动标签');
+        return;
+    }
+    
+    let category = selectedCategory;
+    if (!category && tagCategoryMap[tag]) {
+        category = tagCategoryMap[tag];
+    }
+    
+    if (!category) {
+        alert('请选择类别');
+        return;
+    }
+    
+    quickFillMode = true;
+    quickFillData = { tag, category };
+    
+    // 记录标签-类别对应
+    tagCategoryMap[tag] = category;
+    
+    // 更新标签历史
+    if (!tagHistory[category]) tagHistory[category] = [];
+    tagHistory[category] = tagHistory[category].filter(t => t !== tag);
+    tagHistory[category].push(tag);
+    if (tagHistory[category].length > 20) tagHistory[category].shift();
+    
+    // 显示快速排班条
+    document.getElementById('quick-fill-bar').style.display = 'block';
+    document.getElementById('quick-fill-tag').textContent = `✨ 快速排班：${CATEGORIES[category].emoji} ${tag}`;
+    
+    // 关闭模态框
+    closeModal();
+    
+    // 切换到周计划视图
+    switchTab('plan');
+}
+
+function confirmQuickFill() {
+    quickFillMode = false;
+    saveData();
+    renderWeekPlan();
+    document.getElementById('quick-fill-bar').style.display = 'none';
+}
+
+function exitQuickFill() {
+    quickFillMode = false;
+    document.getElementById('quick-fill-bar').style.display = 'none';
+    renderWeekPlan();
+}
+
+function switchCheckinDay(day) {
+    checkinDay = day;
+    
+    // 更新按钮状态
+    document.querySelectorAll('.date-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.date-btn').forEach((btn, idx) => {
+        if ((day === -1 && idx === 0) || (day === idx - 1)) {
+            btn.style.background = 'var(--accent)';
+            btn.style.color = 'white';
+        } else {
+            btn.style.background = 'white';
+            btn.style.color = 'var(--text)';
+        }
+    });
+    
+    renderTodayView();
+}
+
+function loadReviewData() {
+    document.getElementById('review-good').value = weekData.review.good || '';
+    document.getElementById('review-bad').value = weekData.review.bad || '';
+    document.getElementById('review-next').value = weekData.review.next || '';
+}
+
+function generateAnalysis() {
+    weekData.review.good = document.getElementById('review-good').value;
+    weekData.review.bad = document.getElementById('review-bad').value;
+    weekData.review.next = document.getElementById('review-next').value;
+    saveData();
+    
+    const result = document.getElementById('analysis-result');
+    result.textContent = '✨ 生成分析中...\n\n亲爱的导演，这是你这周的完整总结：\n\n📊 执行数据：\n' + document.getElementById('ai-insight').textContent + '\n\n📝 你的反思：\n✅ 做得好的：' + (weekData.review.good || '(未填写)') + '\n❌ 不足之处：' + (weekData.review.bad || '(未填写)') + '\n💡 改进计划：' + (weekData.review.next || '(未填写)') + '\n\n🎬 导演的建议：\n继续优化你的人生脚本，每周都是新的开始。保持复盘习惯，持续迭代，你会看到显著的成长！';
+    result.style.display = 'block';
+}
+
+function exportData() {
+    const data = { weekData, tagCategoryMap, tagHistory };
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `life-script-${new Date().getTime()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            weekData = data.weekData || weekData;
+            tagCategoryMap = data.tagCategoryMap || tagCategoryMap;
+            tagHistory = data.tagHistory || tagHistory;
+            saveData();
+            
+            renderWeekPlan();
+            renderTodayView();
+            renderWeekReview();
+            loadReviewData();
+            
+            alert('✅ 数据导入成功！');
+        } catch (error) {
+            alert('❌ 导入失败：' + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function clearAllData() {
+    if (confirm('⚠️ 确定要清空所有数据吗？这个操作无法撤销！')) {
+        weekData = { tasks: {}, review: { good: '', bad: '', next: '' } };
+        tagCategoryMap = {};
+        tagHistory = { health: [], family: [], work: [], growth: [] };
+        localStorage.removeItem('life-script-data');
+        
+        renderWeekPlan();
+        renderTodayView();
+        renderWeekReview();
+        loadReviewData();
+        
+        alert('✅ 所有数据已清空！');
+    }
+}
+
+// ===== 分类管理函数 =====
+function showEditCategories() {
+    editingCategoriesTemp = JSON.parse(JSON.stringify(appConfigCategories));
+    renderCategoryEditors();
+    document.getElementById('edit-categories-modal').classList.add('show');
+}
+
+function closeEditCategoriesModal() {
+    document.getElementById('edit-categories-modal').classList.remove('show');
+}
+
+function saveCategories() {
+    const categories = [];
+    let idx = 0;
+    while (document.getElementById(`edit-name-${idx}`)) {
+        const name = document.getElementById(`edit-name-${idx}`).value.trim();
+        const emoji = document.getElementById(`edit-emoji-${idx}`).value.trim();
+        const color = document.getElementById(`edit-color-${idx}`).value;
+        
+        // 前4个必填
+        if (idx < 4 && !name) {
+            alert('前4个分类名称必须填写');
+            return;
+        }
+        
+        if (name) {
+            categories.push({ name, emoji: emoji || '⭕', color });
+        }
+        idx++;
+    }
+    
+    if (categories.length < 4) {
+        alert('至少需要4个分类');
+        return;
+    }
+    
+    appConfigCategories = categories;
+    
+    // 更新 tagHistory 以包含新分类的标签历史
+    const newTagHistory = {};
+    categories.forEach(cat => {
+        newTagHistory[cat.name] = tagHistory[cat.name] || [];
+    });
+    tagHistory = newTagHistory;
+    
+    saveData();
+    closeEditCategoriesModal();
+    
+    // 如果是首次设置，则继续初始化
+    if (isFirstTime) {
+        isFirstTime = false;
+        updateWeekInfo();
+        renderWeekPlan();
+        renderTodayView();
+        renderWeekReview();
+        loadReviewData();
+        alert('✅ 分类设置完成！');
+    } else {
+        alert('✅ 分类已保存！');
+        // 重新渲染界面以显示新分类
+        renderWeekPlan();
+        renderTodayView();
+    }
+}
+
+async function requestDeepAnalysis() {
+    const btn = document.getElementById('deep-analyze-btn');
+    const resultDiv = document.getElementById('ai-deep-insight');
+    
+    btn.disabled = true;
+    btn.textContent = '🤖 分析中...';
+    resultDiv.style.display = 'block';
+    resultDiv.textContent = '正在调用 DeepSeek 进行深度分析...';
+    
+    try {
+        // 准备分析数据
+        const stats = {};
+        const categories = ['health', 'family', 'work', 'growth'];
+        categories.forEach(cat => {
+            stats[cat] = { total: 0, done: 0, skip: 0 };
+        });
+
+        Object.entries(weekData.tasks).forEach(([key, task]) => {
+            if (stats[task.category]) {
+                const hasSkipReason = weekData.skipReasons && weekData.skipReasons[key];
+                if (!hasSkipReason) {
+                    stats[task.category].total++;
+                }
+                if (task.status === 'done') {
+                    stats[task.category].done++;
+                } else if (hasSkipReason) {
+                    stats[task.category].skip++;
+                }
+            }
+        });
+
+        const prompt = `请作为一个生活规划师，对以下周计划数据进行深度分析和建议：
+
+📊 本周完成情况：
+- 健康习惯：${stats.health.done}/${stats.health.total}完成，${stats.health.skip}个因特殊原因跳过
+- 家庭时间：${stats.family.done}/${stats.family.total}完成，${stats.family.skip}个因特殊原因跳过
+- 工作时间：${stats.work.done}/${stats.work.total}完成，${stats.work.skip}个因特殊原因跳过
+- 自我成长：${stats.growth.done}/${stats.growth.total}完成，${stats.growth.skip}个因特殊原因跳过
+
+📝 用户本周反思：
+✅ 做得好的：${weekData.review.good || '未填写'}
+❌ 不足之处：${weekData.review.bad || '未填写'}
+💡 下周计划：${weekData.review.next || '未填写'}
+
+请提供：
+1. 对整周执行情况的深度分析
+2. 时间分配是否合理的建议
+3. 对下一周的具体改进建议
+4. 针对不足之处的解决方案
+5. 鼓励和积极反馈
+
+回复请简洁、actionable，用中文。`;
+
+        const response = await fetch('http://localhost:3000/api/analyze/default', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ prompt })
+        });
+
+        if (!response.ok) {
+            throw new Error(`服务器返回 ${response.status}`);
+        }
+
+        const data = await response.json();
+        const analysis = data.analysis || data.message || '无法获得分析结果';
+        
+        resultDiv.textContent = analysis;
+        resultDiv.style.display = 'block';
+    } catch (error) {
+        console.error('DeepSeek 分析失败:', error);
+        resultDiv.textContent = `❌ 分析失败，请检查：\n1. Node.js 服务器是否运行（端口 3000）\n2. 网络连接\n3. DeepSeek API key 是否配置\n\n错误信息：${error.message}`;
+        resultDiv.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🤖 生活洞察深度分析';
+    }
+}
+
+function showShareOptions() {
+    document.getElementById('share-options-modal').classList.add('show');
+}
+
+function closeShareOptions() {
+    document.getElementById('share-options-modal').classList.remove('show');
+}
+
+function closeSharePreview() {
+    document.getElementById('share-preview-modal').classList.remove('show');
+}
+
+function previewShareCard() {
+    const selectedType = document.querySelector('input[name="share-type"]:checked').value;
+    
+    if (!selectedType) {
+        alert('请选择分享内容');
+        return;
+    }
+
+    // 关闭选项模态，打开预览模态
+    closeShareOptions();
+    
+    // 生成分享卡片并显示预览
+    setTimeout(() => {
+        const canvas = createShareCard(selectedType);
+        const imgDataUrl = canvas.toDataURL('image/png');
+        document.getElementById('share-preview-image').src = imgDataUrl;
+        document.getElementById('share-preview-modal').classList.add('show');
+        
+        // 保存当前类型供下载使用
+        window.currentShareType = selectedType;
+    }, 100);
+}
+
+function downloadPreviewCard() {
+    const canvas = createShareCard(window.currentShareType);
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const typeNames = {
+        'table': '执行表',
+        'combined': '完整周报',
+        'analysis': '数据分析',
+        'reflection': '周复盘'
+    };
+    link.download = `life-script-${typeNames[window.currentShareType] || '分享'}-${dateStr}.png`;
+    link.click();
+    
+    closeSharePreview();
+    alert('✅ 分享图片已下载！');
+}
+
+function createShareCard(type) {
+    const width = 1200;
+    let canvas = document.createElement('canvas');
+    canvas.width = width;
+    
+    let ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    
+    let y = 0;
+    let contentHeight = 0;
+    
+    // 根据类型渲染不同内容
+    if (type === 'table') {
+        // 本周执行情况表 - 重点展示
+        contentHeight = renderTableShareCard(ctx, width, y);
+    } else if (type === 'combined') {
+        // 完整周报 - 表格 + 分析 + 复盘（合并）
+        let currentY = 0;
+        currentY += renderTableShareCard(ctx, width, currentY);
+        currentY += 40; // 间隔
+        currentY += renderAnalysisShareCard(ctx, width, currentY);
+        currentY += 40; // 间隔
+        currentY += renderReflectionShareCard(ctx, width, currentY);
+        contentHeight = currentY;
+    } else if (type === 'analysis') {
+        // 数据分析卡片
+        contentHeight = renderAnalysisShareCard(ctx, width, y);
+    } else if (type === 'reflection') {
+        // 复盘思考卡片
+        contentHeight = renderReflectionShareCard(ctx, width, y);
+    }
+    
+    // 重新设置画布高度（添加底部品牌）
+    let totalHeight = contentHeight + 100;
+    canvas.height = totalHeight;
+    ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    
+    // 重新绘制内容
+    y = 0;
+    if (type === 'table') {
+        renderTableShareCard(ctx, width, y);
+    } else if (type === 'combined') {
+        let currentY = 0;
+        currentY += renderTableShareCard(ctx, width, currentY);
+        currentY += 40;
+        currentY += renderAnalysisShareCard(ctx, width, currentY);
+        currentY += 40;
+        currentY += renderReflectionShareCard(ctx, width, currentY);
+    } else if (type === 'analysis') {
+        renderAnalysisShareCard(ctx, width, y);
+    } else if (type === 'reflection') {
+        renderReflectionShareCard(ctx, width, y);
+    }
+    
+    // 底部品牌信息
+    ctx.fillStyle = '#999';
+    ctx.font = 'italic 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✨ 用「人生脚本」记录你的成长', width / 2, totalHeight - 60);
+    ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(`${new Date().getFullYear()}年${new Date().getMonth() + 1}月${new Date().getDate()}日`, width / 2, totalHeight - 35);
+    
+    return canvas;
+}
+
+// 渲染表格分享卡片（本周执行情况）
+function renderTableShareCard(ctx, width, startY) {
+    let y = startY + 30;
+    
+    // 标题
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('📊 本周执行情况表', width / 2, y);
+    y += 60;
+    
+    // 周信息
+    const weekNum = getWeekNumber(new Date());
+    ctx.font = '18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillStyle = '#666';
+    ctx.fillText(`${weekNum} · ${getWeekDateRange()}`, width / 2, y);
+    y += 50;
+    
+    // 表格内容
+    const cellWidth = (width - 80) / 8;
+    const cellHeight = 35;
+    const padding = 5;
+    const startX = 40;
+    
+    // 表头行
+    const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日', '统计'];
+    ctx.fillStyle = '#667eea';
+    ctx.fillRect(startX, y, width - 80, cellHeight);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    
+    dayNames.forEach((day, idx) => {
+        ctx.fillText(day, startX + idx * cellWidth + cellWidth / 2, y + padding + 8);
+    });
+    y += cellHeight;
+    
+    // 数据行 - 显示每天的完成情况
+    const hours = Array.from({length: 17}, (_, i) => i + 6);
+    
+    hours.forEach(hour => {
+        // 小时标签
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(startX, y, width - 80, cellHeight);
+        ctx.fillStyle = '#333';
+        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        
+        const hourStr = `${hour}:00`;
+        ctx.fillText(hourStr, startX + cellWidth / 2 - 40, y + padding + 8);
+        
+        // 每天的任务状态
+        let dayDones = 0;
+        for (let day = 0; day < 7; day++) {
+            const dayStr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day];
+            const key = `${dayStr}-${hour}`;
+            const task = weekData.tasks[key];
+            
+            const cellX = startX + (day + 1) * cellWidth;
+            
+            if (task) {
+                if (task.status === 'done') {
+                    ctx.fillStyle = '#4CAF50';
+                    dayDones++;
+                } else if (task.status === 'fail') {
+                    const hasSkipReason = weekData.skipReasons && weekData.skipReasons[key];
+                    ctx.fillStyle = hasSkipReason ? '#FFB74D' : '#FF6B6B';
+                } else {
+                    ctx.fillStyle = '#E0E0E0';
+                }
+                ctx.fillRect(cellX, y, cellWidth - 2, cellHeight);
+                
+                // 显示emoji
+                ctx.fillStyle = 'white';
+                ctx.font = '16px Arial';
+                const cat = CATEGORIES[task.category];
+                if (cat && cat.emoji) {
+                    ctx.fillText(cat.emoji.substring(0, 1), cellX + cellWidth / 2, y + padding + 5);
+                }
+            } else {
+                ctx.fillStyle = '#fff';
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(cellX, y, cellWidth - 2, cellHeight);
+            }
+        }
+        
+        // 统计列
+        let total = 0, done = 0;
+        for (let day = 0; day < 7; day++) {
+            const dayStr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day];
+            const key = `${dayStr}-${hour}`;
+            const task = weekData.tasks[key];
+            if (task) {
+                total++;
+                if (task.status === 'done') done++;
+            }
+        }
+        
+        const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(total > 0 ? `${done}/${total}` : '-', startX + 7.5 * cellWidth + cellWidth / 2, y + padding + 8);
+        
+        y += cellHeight;
+    });
+    
+    // 统计信息
+    y += 20;
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'left';
+    
+    let totalTasks = 0, doneTasks = 0;
+    Object.entries(weekData.tasks).forEach(([key, task]) => {
+        const hasSkipReason = weekData.skipReasons && weekData.skipReasons[key];
+        if (!hasSkipReason) {
+            totalTasks++;
+            if (task.status === 'done') doneTasks++;
+        }
+    });
+    
+    const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+    ctx.fillText(`总体完成度: ${completionRate}% (${doneTasks}/${totalTasks}任务)`, startX, y);
+    
+    return y - startY + 40;
+}
+
+// 渲染分析分享卡片
+function renderAnalysisShareCard(ctx, width, startY) {
+    let y = startY + 30;
+    
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('📈 数据分析', width / 2, y);
+    y += 50;
+    
+    const stats = {};
+    const categoryNames = appConfigCategories && appConfigCategories.length > 0 
+        ? appConfigCategories.map(c => c.name) 
+        : Object.keys(CATEGORIES);
+    
+    categoryNames.forEach(name => {
+        stats[name] = { total: 0, done: 0 };
+    });
+    
+    Object.entries(weekData.tasks).forEach(([key, task]) => {
+        if (stats[task.category] !== undefined) {
+            const hasSkipReason = weekData.skipReasons && weekData.skipReasons[key];
+            if (!hasSkipReason) {
+                stats[task.category].total++;
+            }
+            if (task.status === 'done') {
+                stats[task.category].done++;
+            }
+        }
+    });
+    
+    let totalTasks = 0, totalDone = 0;
+    Object.values(stats).forEach(s => {
+        totalTasks += s.total;
+        totalDone += s.done;
+    });
+    
+    const overallRate = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) : 0;
+    
+    // 总体完成度
+    ctx.fillStyle = '#667eea';
+    ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${overallRate}%`, width / 2, y);
+    y += 60;
+    
+    // 分类统计
+    ctx.fillStyle = '#333';
+    ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'left';
+    
+    categoryNames.forEach(name => {
+        const data = stats[name];
+        if (data.total > 0) {
+            const rate = Math.round((data.done / data.total) * 100);
+            const cat = CATEGORIES[name] || { emoji: '⭕', name };
+            ctx.fillText(`${cat.emoji} ${cat.name}: ${data.done}/${data.total} (${rate}%)`, 40, y);
+            y += 40;
+        }
+    });
+    
+    return y - startY + 20;
+}
+
+// 渲染复盘分享卡片
+function renderReflectionShareCard(ctx, width, startY) {
+    let y = startY + 30;
+    
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✍️ 周复盘思考', width / 2, y);
+    y += 50;
+    
+    // 辅助函数：换行文本
+    function drawWrappedText(text, x, y, maxWidth, lineHeight) {
+        let currentY = y;
+        const words = text.split('');
+        let line = '';
+        
+        ctx.fillStyle = '#333';
+        ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'left';
+        
+        for (let char of words) {
+            const metrics = ctx.measureText(line + char);
+            if (metrics.width > maxWidth && line.length > 0) {
+                ctx.fillText(line, x, currentY);
+                line = char;
+                currentY += lineHeight;
+            } else {
+                line += char;
+            }
+        }
+        
+        if (line.length > 0) {
+            ctx.fillText(line, x, currentY);
+            currentY += lineHeight;
+        }
+        
+        return currentY - y;
+    }
+    
+    // ✅ 做得好的
+    ctx.fillStyle = '#4CAF50';
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('✅ 做得好的:', 40, y);
+    y += 35;
+    const goodHeight = drawWrappedText(weekData.review.good || '(未填写)', 50, y, width - 100, 25);
+    y += goodHeight + 25;
+    
+    // ❌ 不足之处
+    ctx.fillStyle = '#FF6B6B';
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText('❌ 不足之处:', 40, y);
+    y += 35;
+    const badHeight = drawWrappedText(weekData.review.bad || '(未填写)', 50, y, width - 100, 25);
+    y += badHeight + 25;
+    
+    // 💡 下周计划
+    ctx.fillStyle = '#FFB74D';
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText('💡 下周计划:', 40, y);
+    y += 35;
+    const nextHeight = drawWrappedText(weekData.review.next || '(未填写)', 50, y, width - 100, 25);
+    y += nextHeight;
+    
+    return y - startY + 20;
+}
+
+init();
+
+// ===== PWA Service Worker 注册 =====
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(reg => {
+                console.log('[PWA] Service Worker 注册成功:', reg.scope);
+            })
+            .catch(err => {
+                console.log('[PWA] Service Worker 注册失败:', err);
+            });
+    });
+}
+
+// ===== iOS Safari 安装提示 =====
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // 显示安装提示（可选）
+    const installBanner = document.createElement('div');
+    installBanner.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    `;
+    installBanner.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">📱</span>
+            <div>
+                <div style="font-weight: 600; font-size: 14px;">安装「人生脚本」</div>
+                <div style="font-size: 11px; opacity: 0.9;">添加到主屏幕，像原生App一样使用</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="install-dismiss" style="padding: 8px 16px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 6px; font-size: 12px; cursor: pointer;">暂不</button>
+            <button id="install-accept" style="padding: 8px 16px; background: white; border: none; color: #667eea; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">安装</button>
+        </div>
+    `;
+    document.body.appendChild(installBanner);
+
+    document.getElementById('install-dismiss').addEventListener('click', () => {
+        installBanner.remove();
+    });
+
+    document.getElementById('install-accept').addEventListener('click', async () => {
+        installBanner.remove();
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`[PWA] 安装结果: ${outcome}`);
+            deferredPrompt = null;
+        }
+    });
+});
+</script>
+
+</body>
+</html>

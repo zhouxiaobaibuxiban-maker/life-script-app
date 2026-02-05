@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生脚本 v2 - 剧本时间管理</title>
+    <style>
+        :root {
+            --bg: #F9FBFB;
+            --text: #333;
+            --sub: #999;
+            --accent: #6C5CE7;
+            --health: #AECBFA;
+            --family: #FDE293;
+            --work: #CCF0DF;
+            --growth: #D4BBFF;
+            --success: #D4F4DD;
+            --danger: #F8D7DA;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid #eee;
+        }
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--accent);
+            margin: 0 0 5px 0;
+        }
+        .header-tagline {
+            font-size: 12px;
+            color: var(--sub);
+            margin: 0 0 10px 0;
+        }
+        .week-info {
+            font-size: 12px;
+            color: var(--text);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #eee;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--sub);
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .tab-btn.tools {
+            margin-left: auto;
+            flex: 0 0 auto;
+            color: #666;
+        }
+        .tab-btn.tools:hover {
+            color: var(--accent);
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* ===== 周计划视图 ===== */
+        .week-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            font-size: 11px;
+        }
+        .week-table th, .week-table td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            height: 30px;
+        }
+        .week-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        .week-cell {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .week-cell:hover {
+            opacity: 0.8;
+        }
+        .task-health { background: var(--health); }
+        .task-family { background: var(--family); }
+        .task-work { background: var(--work); }
+        .task-growth { background: var(--growth); }
+
+        /* ===== 今日打卡 ===== */
+        .today-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .time-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            cursor: pointer;
+        }
+        .time-slot:hover {
+            border-color: var(--accent);
+        }
+        .slot-info { flex: 1; }
+        .slot-time {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .slot-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #f0f0f0;
+        }
+        .slot-status {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .slot-status.done { background: var(--success); border-color: #4caf50; }
+        .slot-status.fail { background: var(--danger); border-color: #dc3545; }
+
+        /* ===== 周审视 ===== */
+        .stats-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent);
+        }
+        .stats-box h3 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+        }
+        .category-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+        .category-stat-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .category-stat-value {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .completion-rate {
+            font-size: 12px;
+            color: var(--sub);
+        }
+        .insight-text {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.6;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        /* ===== 周审视表格 ===== */
+        .review-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            font-size: 11px;
+            margin-bottom: 20px;
+        }
+        .review-table th, .review-table td {
+            border: 1px solid #eee;
+            padding: 6px;
+            text-align: center;
+            height: 30px;
+        }
+        .review-table th {
+            background: #f5f5f5;
+        }
+        .review-cell {
+            background: #f0f0f0;
+        }
+        .review-cell.done {
+            background: var(--success);
+        }
+        .review-cell.fail {
+            background: var(--danger);
+        }
+
+        /* ===== 复盘思考 ===== */
+        .review-section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent);
+        }
+        .review-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .review-section textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .review-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-analyze, .btn-save {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-analyze {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-save {
+            background: #eee;
+        }
+        .analysis-result {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid var(--work);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            display: none;
+            font-size: 13px;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-box h3 {
+            margin: 0 0 15px 0;
+        }
+        .category-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .cat-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .cat-btn.selected {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.1);
+        }
+        .category-hint {
+            font-size: 11px;
+            color: var(--sub);
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        .tag-history {
+            margin-bottom: 10px;
+            display: none;
+        }
+        .tag-history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tag-history-btn {
+            padding: 4px 10px;
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-confirm {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-cancel {
+            background: #eee;
+        }
+
+        /* ===== 导入导出 ===== */
+        .io-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .io-btn {
+            padding: 10px 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .io-btn:hover {
+            background: #f5f5f5;
+        }
+        #import-file {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title">人生脚本 v2</div>
+    <div class="header-tagline">你是你人生的导演 · 每一天都要精彩的活</div>
+    <div class="week-info" id="week-info">
+        <span>2026年第2周 · 1月6日 ~ 1月12日</span>
+    </div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('plan')">📅 周计划</button>
+        <button class="tab-btn" onclick="switchTab('today')">✅ 今日打卡</button>
+        <button class="tab-btn" onclick="switchTab('review')">📊 周审视</button>
+        <button class="tab-btn" onclick="switchTab('reflect')">📝 复盘思考</button>
+        <button class="tab-btn tools" onclick="showTools()">⚙️ 工具</button>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 周计划 -->
+    <div class="view active" id="plan-view">
+        <div style="margin-bottom: 15px; display: none;" id="quick-fill-bar">
+            <div style="background: white; padding: 12px; border-radius: 10px; border-left: 4px solid var(--accent);">
+                <div style="font-size: 12px; color: var(--sub); margin-bottom: 8px;">✨ 快速排班模式</div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span id="quick-fill-tag" style="font-weight: 600;">已选择：</span>
+                    <button style="padding: 6px 12px; background: #eee; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 12px;" onclick="exitQuickFill()">✕ 退出快速模式</button>
+                    <button style="padding: 6px 12px; background: var(--success); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin-left: auto;" onclick="confirmQuickFill()">✓ 确认填充</button>
+                </div>
+            </div>
+        </div>
+        <table class="week-table" id="week-table">
+            <tr>
+                <th>时间</th>
+                <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 今日打卡 -->
+    <div class="view" id="today-view">
+        <div style="margin-bottom: 15px; background: white; padding: 12px; border-radius: 10px;">
+            <div style="font-size: 12px; color: var(--sub); margin-bottom: 8px;">📅 选择日期</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="date-btn active" onclick="switchCheckinDay(-1)" style="padding: 8px 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 12px;">📍 今日</button>
+                <button class="date-btn" onclick="switchCheckinDay(0)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周一</button>
+                <button class="date-btn" onclick="switchCheckinDay(1)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周二</button>
+                <button class="date-btn" onclick="switchCheckinDay(2)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周三</button>
+                <button class="date-btn" onclick="switchCheckinDay(3)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周四</button>
+                <button class="date-btn" onclick="switchCheckinDay(4)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周五</button>
+                <button class="date-btn" onclick="switchCheckinDay(5)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周六</button>
+                <button class="date-btn" onclick="switchCheckinDay(6)" style="padding: 8px 15px; background: white; color: var(--text); border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 12px;">周日</button>
+            </div>
+        </div>
+        <div class="today-grid" id="today-grid"></div>
+    </div>
+
+    <!-- 周审视 -->
+    <div class="view" id="review-view">
+        <table class="review-table" id="review-table">
+            <tr>
+                <th>时间</th>
+                <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th>
+            </tr>
+        </table>
+
+        <div class="stats-box">
+            <h3>📊 本周数据分析</h3>
+            <div id="stats-content"></div>
+        </div>
+
+        <div class="stats-box">
+            <h3>💡 AI洞察</h3>
+            <div id="ai-insight" class="insight-text">完成一些任务后会显示</div>
+        </div>
+    </div>
+
+    <!-- 复盘思考 -->
+    <div class="view" id="reflect-view">
+        <div class="review-section">
+            <h3>✅ 本周做得很好的事</h3>
+            <textarea id="review-good" placeholder="例如：坚持晨跑..."></textarea>
+        </div>
+        <div class="review-section">
+            <h3>❌ 本周没做好的地方</h3>
+            <textarea id="review-bad" placeholder="例如：周末没有陪伴家人..."></textarea>
+        </div>
+        <div class="review-section">
+            <h3>💡 下周的改进计划</h3>
+            <textarea id="review-next" placeholder="例如：调整时间安排..."></textarea>
+        </div>
+        <div class="review-buttons">
+            <button class="btn-analyze" onclick="generateAnalysis()">✨ 生成完整分析</button>
+        </div>
+        <div class="analysis-result" id="analysis-result"></div>
+    </div>
+
+    <!-- 工具面板 -->
+    <div class="view" id="tools-view">
+        <div class="io-buttons">
+            <button class="io-btn" onclick="exportData()">📥 导出数据</button>
+            <button class="io-btn" onclick="document.getElementById('import-file').click()">📤 导入数据</button>
+            <button class="io-btn" onclick="clearAllData()" style="color: #dc3545;">🗑️ 清空所有</button>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 10px; margin-top: 20px;">
+            <h3 style="margin-top: 0;">使用说明</h3>
+            <p>✅ <strong>周计划</strong> - 制定本周的计划，点击格子添加任务</p>
+            <p>✅ <strong>今日打卡</strong> - 标记今天的完成情况（⭕计划中 → ✅已完成 → ❌未完成）</p>
+            <p>✅ <strong>周审视</strong> - 查看本周的执行情况、数据分析和AI洞察</p>
+            <p>✅ <strong>复盘思考</strong> - 反思与总结，生成完整的周报告</p>
+            <p>✅ <strong>导入导出</strong> - 备份和恢复数据，支持多设备同步</p>
+        </div>
+    </div>
+</div>
+
+<!-- 任务编辑模态 -->
+<div class="modal" id="task-modal">
+    <div class="modal-box">
+        <h3>编辑任务</h3>
+        <h4 id="modal-time" style="color: var(--sub); margin: 0 0 15px 0;">周一 7:00</h4>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; display: block; margin-bottom: 8px;">选择类别</label>
+            <div class="category-selector">
+                <button class="cat-btn" onclick="selectCategory('health')">🔵 健康习惯</button>
+                <button class="cat-btn" onclick="selectCategory('family')">🟡 家庭时间</button>
+                <button class="cat-btn" onclick="selectCategory('work')">💚 工作时间</button>
+                <button class="cat-btn" onclick="selectCategory('growth')">💜 自我成长</button>
+            </div>
+        </div>
+        <div class="category-hint" id="category-hint"></div>
+        <div class="tag-history" id="tag-history">
+            <div style="font-size: 11px; color: var(--sub); margin-bottom: 6px;">📚 你之前用过的标签</div>
+            <div class="tag-history-list" id="tag-history-list"></div>
+        </div>
+        <input type="text" class="modal-input" id="task-tag" placeholder="输入活动标签">
+        <div class="modal-buttons">
+            <button class="btn-confirm" onclick="saveTask()">✓ 确认</button>
+            <button style="flex: 1; padding: 10px; background: var(--work); color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="enterQuickFill()">⚡ 快速排班</button>
+            <button class="btn-cancel" onclick="closeModal()">✕ 取消</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="import-file" accept=".json" onchange="importData(event)">
+
+<script>
+const HOURS = Array.from({length: 17}, (_, i) => i + 7);
+const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const CATEGORIES = {
+    health: { name: '健康习惯', emoji: '🔵', hint: '🎭 懒虫 | 跑步狂 | 瑜伽仙女 | 冥想者 | 睡眠卫士' },
+    family: { name: '家庭时间', emoji: '🟡', hint: '🎭 陪伴侠 | 家务卫士 | 奶爸奶妈 | 做饭大厨 | 故事讲述者' },
+    work: { name: '工作时间', emoji: '💚', hint: '🎭 打工狗 | 写作家 | 代码侠 | 会议达人 | 项目经理' },
+    growth: { name: '自我成长', emoji: '💜', hint: '🎭 阅读虫 | 思考者 | 学习者 | 日记作家 | 知识猎人' }
+};
+
+let weekData = { tasks: {}, review: { good: '', bad: '', next: '' } };
+let tagCategoryMap = {}; // 记录标签对应的类别
+let tagHistory = { health: [], family: [], work: [], growth: [] };
+let selectedCategory = null;
+let selectedSlot = null;
+let quickFillMode = false;
+let quickFillData = null;
+let checkinDay = -1; // -1 表示今日，0-6 表示周一到周日
+
+// 初始化
+function init() {
+    loadData();
+    updateWeekInfo();
+    renderWeekPlan();
+    renderTodayView();
+    renderWeekReview();
+    loadReviewData();
+}
+
+function loadData() {
+    const stored = localStorage.getItem('life-script-data');
+    if (stored) {
+        const data = JSON.parse(stored);
+        weekData = data.weekData || weekData;
+        tagCategoryMap = data.tagCategoryMap || tagCategoryMap;
+        tagHistory = data.tagHistory || tagHistory;
+    }
+}
+
+function saveData() {
+    const data = { weekData, tagCategoryMap, tagHistory };
+    localStorage.setItem('life-script-data', JSON.stringify(data));
+}
+
+function updateWeekInfo() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const firstDay = new Date(year, 0, 1);
+    const pastDaysOfYear = (now - firstDay) / 86400000;
+    const week = Math.ceil((pastDaysOfYear + firstDay.getDay() + 1) / 7);
+    
+    const dayOfWeek = now.getDay() || 7;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dayOfWeek + 1);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const startMonth = weekStart.getMonth() + 1;
+    const startDate = weekStart.getDate();
+    const endMonth = weekEnd.getMonth() + 1;
+    const endDate = weekEnd.getDate();
+
+    document.getElementById('week-info').textContent = 
+        `${year}年第${week}周 · ${startMonth}月${startDate}日 ~ ${endMonth}月${endDate}日`;
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const viewMap = {
+        plan: 'plan-view',
+        today: 'today-view',
+        review: 'review-view',
+        reflect: 'reflect-view',
+        tools: 'tools-view'
+    };
+    
+    if (viewMap[tab]) {
+        document.getElementById(viewMap[tab]).classList.add('active');
+        document.querySelector(`.tab-btn[onclick*="'${tab}'"]`).classList.add('active');
+    }
+}
+
+function showTools() {
+    switchTab('tools');
+}
+
+function renderWeekPlan() {
+    let html = '<tr><th>时间</th>';
+    DAYS.forEach(d => html += `<th>${d}</th>`);
+    html += '</tr>';
+    
+    HOURS.forEach(hour => {
+        html += `<tr><td style="background: #f5f5f5; font-weight: 500;">${hour}:00</td>`;
+        for (let day = 0; day < 7; day++) {
+            const key = `${day}-${hour}`;
+            const task = weekData.tasks[key];
+            if (task) {
+                html += `<td class="week-cell task-${task.category}" onclick="handleWeekCellClick(${day}, ${hour})">${task.tag}</td>`;
+            } else {
+                html += `<td class="week-cell" onclick="handleWeekCellClick(${day}, ${hour})"></td>`;
+            }
+        }
+        html += '</tr>';
+    });
+    document.getElementById('week-table').innerHTML = html;
+}
+
+function handleWeekCellClick(day, hour) {
+    if (quickFillMode) {
+        // 快速排班模式：点击填充
+        const key = `${day}-${hour}`;
+        weekData.tasks[key] = { 
+            category: quickFillData.category, 
+            tag: quickFillData.tag, 
+            status: 'plan' 
+        };
+        renderWeekPlan();
+    } else {
+        // 普通模式：打开编辑框
+        openEditModal(day, hour);
+    }
+}
+
+function renderWeekReview() {
+    let html = '<tr><th>时间</th>';
+    DAYS.forEach(d => html += `<th>${d}</th>`);
+    html += '</tr>';
+    
+    HOURS.forEach(hour => {
+        html += `<tr><td style="background: #f5f5f5;">${hour}:00</td>`;
+        for (let day = 0; day < 7; day++) {
+            const key = `${day}-${hour}`;
+            const task = weekData.tasks[key];
+            let cellClass = 'review-cell';
+            let content = '';
+            
+            if (task) {
+                if (task.status === 'done') {
+                    cellClass = 'review-cell done';
+                    content = '✅';
+                } else if (task.status === 'fail') {
+                    cellClass = 'review-cell fail';
+                    content = '❌';
+                } else {
+                    cellClass = 'review-cell';
+                    content = '⭕';
+                }
+            }
+            html += `<td class="${cellClass}">${content}</td>`;
+        }
+        html += '</tr>';
+    });
+    document.getElementById('review-table').innerHTML = html;
+    
+    // 更新统计数据
+    updateStats();
+}
+
+function updateStats() {
+    const stats = {
+        health: { total: 0, done: 0 },
+        family: { total: 0, done: 0 },
+        work: { total: 0, done: 0 },
+        growth: { total: 0, done: 0 }
+    };
+
+    Object.entries(weekData.tasks).forEach(([key, task]) => {
+        if (stats[task.category]) {
+            stats[task.category].total++;
+            if (task.status === 'done') {
+                stats[task.category].done++;
+            }
+        }
+    });
+
+    let html = '';
+    let totalTasks = 0;
+    let totalDone = 0;
+
+    Object.entries(stats).forEach(([cat, data]) => {
+        totalTasks += data.total;
+        totalDone += data.done;
+        const percentage = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0;
+        html += `
+            <div class="category-stat">
+                <div class="category-stat-label">
+                    <span>${CATEGORIES[cat].emoji}</span>
+                    <span>${CATEGORIES[cat].name}</span>
+                </div>
+                <div style="text-align: right;">
+                    <div class="category-stat-value">${percentage}%</div>
+                    <div class="completion-rate">${data.done}/${data.total}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    document.getElementById('stats-content').innerHTML = html;
+
+    // 生成AI洞察
+    generateInsight(stats, totalTasks, totalDone);
+}
+
+function generateInsight(stats, totalTasks, totalDone) {
+    if (totalTasks === 0) {
+        document.getElementById('ai-insight').textContent = '还没有任务，赶快规划你的一周吧！';
+        return;
+    }
+
+    const overallRate = Math.round((totalDone / totalTasks) * 100);
+    const categories = Object.entries(stats).sort((a, b) => {
+        const rateA = a[1].total > 0 ? (a[1].done / a[1].total) * 100 : 0;
+        const rateB = b[1].total > 0 ? (b[1].done / b[1].total) * 100 : 0;
+        return rateB - rateA;
+    });
+
+    let insight = `📊 你的本周成绩：${overallRate}%\n\n`;
+
+    // 最高分类别
+    const top = categories[0];
+    if (top[1].total > 0) {
+        const topRate = Math.round((top[1].done / top[1].total) * 100);
+        if (topRate === 100) {
+            insight += `✨ 完美！${CATEGORIES[top[0]].name}完成率100%，你真是个行动力满满的人！\n\n`;
+        } else if (topRate >= 80) {
+            insight += `🌟 ${CATEGORIES[top[0]].name}的执行率最高（${topRate}%），保持这个势头！\n\n`;
+        }
+    }
+
+    // 时间占比分析
+    const totalHours = Object.values(stats).reduce((sum, s) => sum + s.total, 0);
+    insight += '⏰ 本周时间分配：\n';
+    Object.entries(stats).forEach(([cat, data]) => {
+        if (data.total > 0) {
+            const percent = Math.round((data.total / totalHours) * 100);
+            insight += `  • ${CATEGORIES[cat].name}：${percent}%\n`;
+        }
+    });
+
+    // 个性评价
+    const workPercent = stats.work.total > 0 ? Math.round((stats.work.total / totalHours) * 100) : 0;
+    const healthPercent = stats.health.total > 0 ? Math.round((stats.health.total / totalHours) * 100) : 0;
+    const growthPercent = stats.growth.total > 0 ? Math.round((stats.growth.total / totalHours) * 100) : 0;
+
+    insight += '\n💡 导演的评语：\n';
+    if (workPercent > 50) {
+        insight += `你可真是个"加班狂"，工作占比${workPercent}%！记得也要关照身体和家庭哦。`;
+    } else if (healthPercent > 40) {
+        insight += `你是个"健身达人"，对身体很用心！继续保持，但也要注重工作成长。`;
+    } else if (growthPercent > 40) {
+        insight += `你是个"学习狂魔"，自我提升很积极！棒极了，这就是成长的样子。`;
+    } else {
+        insight += `时间分配很均衡，你真是个有"剧本意识"的导演！`;
+    }
+
+    document.getElementById('ai-insight').textContent = insight;
+}
+
+function renderTodayView() {
+    const now = new Date();
+    let dayIndex = checkinDay === -1 ? (now.getDay() || 7) - 1 : checkinDay;
+    
+    let html = '';
+    
+    HOURS.forEach(hour => {
+        const key = `${dayIndex}-${hour}`;
+        const task = weekData.tasks[key];
+        if (task) {
+            const statusClass = task.status === 'done' ? 'done' : task.status === 'fail' ? 'fail' : '';
+            const status = task.status === 'done' ? '✅' : task.status === 'fail' ? '❌' : '⭕';
+            html += `
+                <div class="time-slot">
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div>${CATEGORIES[task.category].emoji} <span class="slot-tag">${task.tag}</span></div>
+                    </div>
+                    <div class="slot-status ${statusClass}" onclick="toggleStatus('${key}')">${status}</div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="time-slot" onclick="openEditModal(${dayIndex}, ${hour})">
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div style="color: #ccc;">未安排</div>
+                    </div>
+                    <div style="color: #999;">+</div>
+                </div>
+            `;
+        }
+    });
+    document.getElementById('today-grid').innerHTML = html;
+}
+
+function toggleStatus(key) {
+    const task = weekData.tasks[key];
+    const statuses = ['plan', 'done', 'fail'];
+    const idx = statuses.indexOf(task.status || 'plan');
+    task.status = statuses[(idx + 1) % 3];
+    saveData();
+    renderWeekPlan();
+    renderTodayView();
+    renderWeekReview();
+}
+
+function openEditModal(day, hour) {
+    selectedSlot = { day, hour };
+    const key = `${day}-${hour}`;
+    const task = weekData.tasks[key];
+    
+    document.getElementById('modal-time').textContent = `${DAYS[day]} ${hour}:00`;
+    document.getElementById('task-tag').value = task ? task.tag : '';
+    
+    selectedCategory = task ? task.category : null;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    
+    if (selectedCategory) {
+        const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+        const catKeys = Object.keys(CATEGORIES);
+        const idx = catKeys.indexOf(selectedCategory);
+        if (idx >= 0 && buttons[idx]) {
+            buttons[idx].classList.add('selected');
+            updateCategoryHint(selectedCategory);
+        }
+    }
+    document.getElementById('task-modal').classList.add('show');
+}
+
+function selectCategory(cat) {
+    selectedCategory = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    
+    const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+    const catKeys = Object.keys(CATEGORIES);
+    const idx = catKeys.indexOf(cat);
+    if (idx >= 0 && buttons[idx]) {
+        buttons[idx].classList.add('selected');
+    }
+    
+    updateCategoryHint(cat);
+    updateTagHistory(cat);
+}
+
+function selectKnownTag(tag) {
+    // 自动检测标签对应的类别
+    if (tagCategoryMap[tag]) {
+        selectedCategory = tagCategoryMap[tag];
+        // 自动选中对应的类别按钮
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+        const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+        const catKeys = Object.keys(CATEGORIES);
+        const idx = catKeys.indexOf(selectedCategory);
+        if (idx >= 0 && buttons[idx]) {
+            buttons[idx].classList.add('selected');
+        }
+        updateCategoryHint(selectedCategory);
+    }
+    // 填充标签值
+    document.getElementById('task-tag').value = tag;
+    document.getElementById('task-tag').focus();
+}
+
+function updateCategoryHint(cat) {
+    document.getElementById('category-hint').textContent = CATEGORIES[cat].hint;
+}
+
+function updateTagHistory(cat) {
+    const history = tagHistory[cat] || [];
+    const historyDiv = document.getElementById('tag-history');
+    if (history.length > 0) {
+        historyDiv.style.display = 'block';
+        let html = '';
+        history.slice(-5).reverse().forEach(tag => {
+            html += `<button class="tag-history-btn" onclick="selectKnownTag('${tag.replace(/'/g, "\\'")}')">${tag}</button>`;
+        });
+        document.getElementById('tag-history-list').innerHTML = html;
+    } else {
+        historyDiv.style.display = 'none';
+    }
+}
+
+function saveTask() {
+    const tag = document.getElementById('task-tag').value.trim();
+    if (!tag) {
+        alert('请输入活动标签');
+        return;
+    }
+    
+    // 如果标签已知，自动识别类别
+    let category = selectedCategory;
+    if (!category && tagCategoryMap[tag]) {
+        category = tagCategoryMap[tag];
+    }
+    
+    if (!category) {
+        alert('请选择类别');
+        return;
+    }
+    
+    // 记录标签-类别对应
+    tagCategoryMap[tag] = category;
+    
+    // 更新标签历史
+    if (!tagHistory[category]) tagHistory[category] = [];
+    tagHistory[category] = tagHistory[category].filter(t => t !== tag);
+    tagHistory[category].push(tag);
+    if (tagHistory[category].length > 20) tagHistory[category].shift();
+    
+    const key = `${selectedSlot.day}-${selectedSlot.hour}`;
+    weekData.tasks[key] = { category: category, tag, status: 'plan' };
+    saveData();
+    renderWeekPlan();
+    renderTodayView();
+    renderWeekReview();
+    closeModal();
+}
+
+function closeModal() {
+    document.getElementById('task-modal').classList.remove('show');
+}
+
+function enterQuickFill() {
+    const tag = document.getElementById('task-tag').value.trim();
+    if (!tag) {
+        alert('请输入活动标签');
+        return;
+    }
+    
+    let category = selectedCategory;
+    if (!category && tagCategoryMap[tag]) {
+        category = tagCategoryMap[tag];
+    }
+    
+    if (!category) {
+        alert('请选择类别');
+        return;
+    }
+    
+    quickFillMode = true;
+    quickFillData = { tag, category };
+    
+    // 记录标签-类别对应
+    tagCategoryMap[tag] = category;
+    
+    // 更新标签历史
+    if (!tagHistory[category]) tagHistory[category] = [];
+    tagHistory[category] = tagHistory[category].filter(t => t !== tag);
+    tagHistory[category].push(tag);
+    if (tagHistory[category].length > 20) tagHistory[category].shift();
+    
+    // 显示快速排班条
+    document.getElementById('quick-fill-bar').style.display = 'block';
+    document.getElementById('quick-fill-tag').textContent = `✨ 快速排班：${CATEGORIES[category].emoji} ${tag}`;
+    
+    // 关闭模态框
+    closeModal();
+    
+    // 切换到周计划视图
+    switchTab('plan');
+}
+
+function confirmQuickFill() {
+    quickFillMode = false;
+    saveData();
+    renderWeekPlan();
+    document.getElementById('quick-fill-bar').style.display = 'none';
+}
+
+function exitQuickFill() {
+    quickFillMode = false;
+    document.getElementById('quick-fill-bar').style.display = 'none';
+    renderWeekPlan();
+}
+
+function switchCheckinDay(day) {
+    checkinDay = day;
+    
+    // 更新按钮状态
+    document.querySelectorAll('.date-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.date-btn').forEach((btn, idx) => {
+        if ((day === -1 && idx === 0) || (day === idx - 1)) {
+            btn.style.background = 'var(--accent)';
+            btn.style.color = 'white';
+        } else {
+            btn.style.background = 'white';
+            btn.style.color = 'var(--text)';
+        }
+    });
+    
+    renderTodayView();
+}
+
+function loadReviewData() {
+    document.getElementById('review-good').value = weekData.review.good || '';
+    document.getElementById('review-bad').value = weekData.review.bad || '';
+    document.getElementById('review-next').value = weekData.review.next || '';
+}
+
+function generateAnalysis() {
+    weekData.review.good = document.getElementById('review-good').value;
+    weekData.review.bad = document.getElementById('review-bad').value;
+    weekData.review.next = document.getElementById('review-next').value;
+    saveData();
+    
+    const result = document.getElementById('analysis-result');
+    result.textContent = '✨ 生成分析中...\n\n亲爱的导演，这是你这周的完整总结：\n\n📊 执行数据：\n' + document.getElementById('ai-insight').textContent + '\n\n📝 你的反思：\n✅ 做得好的：' + (weekData.review.good || '(未填写)') + '\n❌ 不足之处：' + (weekData.review.bad || '(未填写)') + '\n💡 改进计划：' + (weekData.review.next || '(未填写)') + '\n\n🎬 导演的建议：\n继续优化你的人生脚本，每周都是新的开始。保持复盘习惯，持续迭代，你会看到显著的成长！';
+    result.style.display = 'block';
+}
+
+function exportData() {
+    const data = { weekData, tagCategoryMap, tagHistory };
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `life-script-${new Date().getTime()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            weekData = data.weekData || weekData;
+            tagCategoryMap = data.tagCategoryMap || tagCategoryMap;
+            tagHistory = data.tagHistory || tagHistory;
+            saveData();
+            
+            renderWeekPlan();
+            renderTodayView();
+            renderWeekReview();
+            loadReviewData();
+            
+            alert('✅ 数据导入成功！');
+        } catch (error) {
+            alert('❌ 导入失败：' + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function clearAllData() {
+    if (confirm('⚠️ 确定要清空所有数据吗？这个操作无法撤销！')) {
+        weekData = { tasks: {}, review: { good: '', bad: '', next: '' } };
+        tagCategoryMap = {};
+        tagHistory = { health: [], family: [], work: [], growth: [] };
+        localStorage.removeItem('life-script-data');
+        
+        renderWeekPlan();
+        renderTodayView();
+        renderWeekReview();
+        loadReviewData();
+        
+        alert('✅ 所有数据已清空！');
+    }
+}
+
+init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ipconfig:*)",
+      "Bash(npm install:*)",
+      "Bash(npx cap add:*)",
+      "Bash(npx cap sync:*)",
+      "Bash(./gradlew:*)",
+      "Bash(java:*)",
+      "Bash(git init:*)"
+    ]
+  }
+}

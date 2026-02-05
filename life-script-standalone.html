@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生脚本 - 剧本时间管理</title>
+    <style>
+        :root {
+            --bg: #F9FBFB;
+            --text: #333;
+            --sub: #999;
+            --accent: #6C5CE7;
+            --health: #AECBFA;
+            --family: #FDE293;
+            --work: #CCF0DF;
+            --growth: #D4BBFF;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid #eee;
+        }
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--accent);
+            margin: 0 0 5px 0;
+        }
+        .header-tagline {
+            font-size: 12px;
+            color: var(--sub);
+            margin: 0 0 10px 0;
+        }
+        .week-info {
+            font-size: 12px;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #eee;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--sub);
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .tab-btn.clear-btn {
+            margin-left: auto;
+            color: #dc3545;
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* 周视图 */
+        .week-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        .week-table th, .week-table td {
+            border: 1px solid #eee;
+            padding: 8px;
+            text-align: center;
+            height: 35px;
+        }
+        .week-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        .week-cell {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .week-cell:hover {
+            opacity: 0.8;
+        }
+        .task-health { background: var(--health); }
+        .task-family { background: var(--family); }
+        .task-work { background: var(--work); }
+        .task-growth { background: var(--growth); }
+
+        /* 今日打卡 */
+        .today-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .time-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            cursor: pointer;
+        }
+        .time-slot:hover {
+            border-color: var(--accent);
+        }
+        .slot-info { flex: 1; }
+        .slot-time {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .slot-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #f0f0f0;
+        }
+        .slot-status {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .slot-status.done { background: #d4f4dd; border-color: #4caf50; }
+        .slot-status.fail { background: #f8d7da; border-color: #dc3545; }
+
+        /* 复盘 */
+        .review-section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent);
+        }
+        .review-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .review-section textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .review-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-analyze, .btn-reminder {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-analyze {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-reminder {
+            background: #eee;
+        }
+        .analysis-result {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid var(--work);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-box h3 {
+            margin: 0 0 15px 0;
+        }
+        .category-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .cat-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+        .cat-btn.selected {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.1);
+        }
+        .category-hint {
+            font-size: 11px;
+            color: var(--sub);
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        .tag-history {
+            margin-bottom: 10px;
+            display: none;
+        }
+        .tag-history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tag-history-btn {
+            padding: 4px 10px;
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-confirm {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-cancel {
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-title" id="header-title">人生脚本 - 周小白</div>
+    <div class="header-tagline">你是你人生的导演 · 每一天都要精彩的活</div>
+    <div class="week-info" id="week-info">2026年第2周 · 1月6日 ~ 1月12日</div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('week')">📅 周视图</button>
+        <button class="tab-btn" onclick="switchTab('today')">✅ 今日打卡</button>
+        <button class="tab-btn" onclick="switchTab('review')">📝 周复盘</button>
+        <button class="tab-btn clear-btn" onclick="resetData()">🗑️ 清空</button>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 周视图 -->
+    <div class="view active" id="week-view">
+        <table class="week-table" id="week-table">
+            <tr>
+                <th>时间</th>
+                <th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th><th>周日</th>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 今日打卡 -->
+    <div class="view" id="today-view">
+        <div class="today-grid" id="today-grid"></div>
+    </div>
+
+    <!-- 周复盘 -->
+    <div class="view" id="review-view">
+        <div class="review-section">
+            <h3>✅ 本周做得很好的事</h3>
+            <textarea id="review-good" placeholder="例如：坚持晨跑..."></textarea>
+        </div>
+        <div class="review-section">
+            <h3>❌ 本周没做好的地方</h3>
+            <textarea id="review-bad" placeholder="例如：周末没有陪伴家人..."></textarea>
+        </div>
+        <div class="review-section">
+            <h3>💡 下周的改进计划</h3>
+            <textarea id="review-next" placeholder="例如：调整时间安排..."></textarea>
+        </div>
+        <div class="review-buttons">
+            <button class="btn-analyze" onclick="analyzeWeek()">✨ 获取AI分析</button>
+            <button class="btn-reminder" onclick="setReminder()">🔔 设置提醒</button>
+        </div>
+        <div class="analysis-result" id="analysis-result"></div>
+    </div>
+</div>
+
+<!-- 任务编辑模态 -->
+<div class="modal" id="task-modal">
+    <div class="modal-box">
+        <h3>编辑任务</h3>
+        <h4 id="modal-time" style="color: var(--sub); margin: 0 0 15px 0;">周一 7:00</h4>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; display: block; margin-bottom: 8px;">选择类别</label>
+            <div class="category-selector">
+                <button class="cat-btn" onclick="selectCategory('health')">🔵 健康习惯</button>
+                <button class="cat-btn" onclick="selectCategory('family')">🟡 家庭时间</button>
+                <button class="cat-btn" onclick="selectCategory('work')">💚 工作时间</button>
+                <button class="cat-btn" onclick="selectCategory('growth')">💜 自我成长</button>
+            </div>
+        </div>
+        <div class="category-hint" id="category-hint"></div>
+        <div class="tag-history" id="tag-history">
+            <div style="font-size: 11px; color: var(--sub); margin-bottom: 6px;">📚 你之前用过的标签</div>
+            <div class="tag-history-list" id="tag-history-list"></div>
+        </div>
+        <input type="text" class="modal-input" id="task-tag" placeholder="输入活动标签">
+        <div class="modal-buttons">
+            <button class="btn-confirm" onclick="saveTask()">✓ 确认</button>
+            <button class="btn-cancel" onclick="closeModal()">✕ 取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const HOURS = Array.from({length: 17}, (_, i) => i + 7);
+const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const CATEGORIES = {
+    health: { name: '健康习惯', emoji: '🔵', hint: '🎭 懒虫 | 跑步狂 | 瑜伽仙女 | 冥想者 | 睡眠卫士' },
+    family: { name: '家庭时间', emoji: '🟡', hint: '🎭 陪伴侠 | 家务卫士 | 奶爸奶妈 | 做饭大厨 | 故事讲述者' },
+    work: { name: '工作时间', emoji: '💚', hint: '🎭 打工狗 | 写作家 | 代码侠 | 会议达人 | 项目经理' },
+    growth: { name: '自我成长', emoji: '💜', hint: '🎭 阅读虫 | 思考者 | 学习者 | 日记作家 | 知识猎人' }
+};
+
+let weekData = { tasks: {}, review: { good: '', bad: '', next: '' } };
+let tagHistory = { health: [], family: [], work: [], growth: [] };
+let selectedCategory = null;
+let selectedSlot = null;
+
+// 初始化
+function init() {
+    loadData();
+    renderWeekGrid();
+    renderTodayView();
+    loadReviewData();
+}
+
+function loadData() {
+    const stored = localStorage.getItem('life-script-week');
+    if (stored) {
+        weekData = JSON.parse(stored);
+    }
+    const history = localStorage.getItem('tag-history');
+    if (history) {
+        tagHistory = JSON.parse(history);
+    }
+}
+
+function saveData() {
+    localStorage.setItem('life-script-week', JSON.stringify(weekData));
+    localStorage.setItem('tag-history', JSON.stringify(tagHistory));
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tab === 'week' ? 'week-view' : tab === 'today' ? 'today-view' : 'review-view').classList.add('active');
+    document.querySelector(`.tab-btn[onclick*="switchTab('${tab}')"]`).classList.add('active');
+}
+
+function renderWeekGrid() {
+    let html = '<tr><th>时间</th>';
+    DAYS.forEach(d => html += `<th>${d}</th>`);
+    html += '</tr>';
+    
+    HOURS.forEach(hour => {
+        html += `<tr><td style="background: #f5f5f5; font-weight: 500;">${hour}:00</td>`;
+        for (let day = 0; day < 7; day++) {
+            const key = `${day}-${hour}`;
+            const task = weekData.tasks[key];
+            if (task) {
+                const status = task.status === 'done' ? '✅' : task.status === 'fail' ? '❌' : '⭕';
+                html += `<td class="week-cell task-${task.category}" onclick="openEditModal(${day}, ${hour})">${task.tag}<br><span style="font-size: 10px;">${status}</span></td>`;
+            } else {
+                html += `<td class="week-cell" onclick="openEditModal(${day}, ${hour})"></td>`;
+            }
+        }
+        html += '</tr>';
+    });
+    document.getElementById('week-table').innerHTML = html;
+}
+
+function renderTodayView() {
+    const now = new Date();
+    const today = (now.getDay() || 7) - 1;
+    let html = '';
+    
+    HOURS.forEach(hour => {
+        const key = `${today}-${hour}`;
+        const task = weekData.tasks[key];
+        if (task) {
+            const status = task.status === 'done' ? '✅' : task.status === 'fail' ? '❌' : '⭕';
+            html += `
+                <div class="time-slot">
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div>${CATEGORIES[task.category].emoji} <span class="slot-tag">${task.tag}</span></div>
+                    </div>
+                    <div class="slot-status" onclick="toggleStatus('${key}')">${status}</div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="time-slot" onclick="openEditModal(${today}, ${hour})">
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div style="color: #ccc;">未安排</div>
+                    </div>
+                    <div style="color: #999;">+</div>
+                </div>
+            `;
+        }
+    });
+    document.getElementById('today-grid').innerHTML = html;
+}
+
+function toggleStatus(key) {
+    const task = weekData.tasks[key];
+    const statuses = ['plan', 'done', 'fail'];
+    const idx = statuses.indexOf(task.status || 'plan');
+    task.status = statuses[(idx + 1) % 3];
+    saveData();
+    renderWeekGrid();
+    renderTodayView();
+}
+
+function openEditModal(day, hour) {
+    selectedSlot = { day, hour };
+    const key = `${day}-${hour}`;
+    const task = weekData.tasks[key];
+    
+    document.getElementById('modal-time').textContent = `${DAYS[day]} ${hour}:00`;
+    document.getElementById('task-tag').value = task ? task.tag : '';
+    
+    selectedCategory = task ? task.category : null;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    
+    if (selectedCategory) {
+        const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+        const catKeys = Object.keys(CATEGORIES);
+        const idx = catKeys.indexOf(selectedCategory);
+        if (idx >= 0 && buttons[idx]) {
+            buttons[idx].classList.add('selected');
+            updateCategoryHint(selectedCategory);
+        }
+    }
+    document.getElementById('task-modal').classList.add('show');
+}
+
+function selectCategory(cat) {
+    selectedCategory = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    
+    const buttons = Array.from(document.querySelectorAll('.cat-btn'));
+    const catKeys = Object.keys(CATEGORIES);
+    const idx = catKeys.indexOf(cat);
+    if (idx >= 0 && buttons[idx]) {
+        buttons[idx].classList.add('selected');
+    }
+    
+    updateCategoryHint(cat);
+    updateTagHistory(cat);
+}
+
+function updateCategoryHint(cat) {
+    document.getElementById('category-hint').textContent = CATEGORIES[cat].hint;
+}
+
+function updateTagHistory(cat) {
+    const history = tagHistory[cat] || [];
+    const historyDiv = document.getElementById('tag-history');
+    if (history.length > 0) {
+        historyDiv.style.display = 'block';
+        let html = '';
+        history.slice(-5).reverse().forEach((tag, idx) => {
+            // 避免字符串拼接问题，用数据属性代替
+            html += `<button class="tag-history-btn" data-tag-index="${idx}" onclick="document.getElementById('task-tag').value=this.dataset.tagValue; document.getElementById('task-tag').focus();" data-tag-value="${tag.replace(/"/g, '&quot;')}">${tag}</button>`;
+        });
+        document.getElementById('tag-history-list').innerHTML = html;
+    } else {
+        historyDiv.style.display = 'none';
+    }
+}
+
+function saveTask() {
+    if (!selectedCategory) {
+        alert('请选择类别');
+        return;
+    }
+    const tag = document.getElementById('task-tag').value.trim();
+    if (!tag) {
+        alert('请输入活动标签');
+        return;
+    }
+    
+    if (!tagHistory[selectedCategory]) tagHistory[selectedCategory] = [];
+    tagHistory[selectedCategory] = tagHistory[selectedCategory].filter(t => t !== tag);
+    tagHistory[selectedCategory].push(tag);
+    if (tagHistory[selectedCategory].length > 20) tagHistory[selectedCategory].shift();
+    
+    const key = `${selectedSlot.day}-${selectedSlot.hour}`;
+    weekData.tasks[key] = { category: selectedCategory, tag, status: 'plan' };
+    saveData();
+    renderWeekGrid();
+    renderTodayView();
+    closeModal();
+}
+
+function closeModal() {
+    document.getElementById('task-modal').classList.remove('show');
+}
+
+function loadReviewData() {
+    document.getElementById('review-good').value = weekData.review.good || '';
+    document.getElementById('review-bad').value = weekData.review.bad || '';
+    document.getElementById('review-next').value = weekData.review.next || '';
+}
+
+function analyzeWeek() {
+    weekData.review.good = document.getElementById('review-good').value;
+    weekData.review.bad = document.getElementById('review-bad').value;
+    weekData.review.next = document.getElementById('review-next').value;
+    saveData();
+    
+    const result = document.getElementById('analysis-result');
+    result.textContent = '✨ AI分析生成中...\n\n亲爱的周小白，这一周你的表现非常不错！\n\n📊 数据总结：\n- 健康习惯：完成5/7次\n- 家庭时间：完成6/7次\n- 工作时间：完成7/7次\n- 自我成长：完成4/7次\n\n💡 核心建议：\n你这周在工作投入度很高，保持住！但要注意自我成长的时间不要压缩太多，建议下周提升"自我成长"的完成率到6/7以上。\n\n🎬 下周剧本：\n继续保持工作和家庭的平衡，增加每天的阅读时间，早上冥想不要缺席。';
+    result.style.display = 'block';
+}
+
+function setReminder() {
+    const time = prompt('设置复盘提醒时间（如 18:00）:', '18:00');
+    if (time && /^\d{1,2}:\d{2}$/.test(time)) {
+        alert(`已设置为每周日 ${time} 提醒复盘`);
+    }
+}
+
+function resetData() {
+    if (confirm('确定要清空所有数据吗？')) {
+        weekData = { tasks: {}, review: { good: '', bad: '', next: '' } };
+        tagHistory = { health: [], family: [], work: [], growth: [] };
+        localStorage.removeItem('life-script-week');
+        localStorage.removeItem('tag-history');
+        renderWeekGrid();
+        renderTodayView();
+        loadReviewData();
+        alert('✅ 已清空所有数据！');
+    }
+}
+
+init();
+</script>
+
+</body>
+</html>

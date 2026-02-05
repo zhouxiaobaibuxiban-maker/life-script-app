@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6C5CE7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="人生脚本">
+    <link rel="manifest" href="/manifest.json">
+    <title>人生脚本 - 剧本时间管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg: #F9FBFB;
+            --text: #333;
+            --sub: #999;
+            --accent: #6C5CE7;
+            --health: #AECBFA;
+            --family: #FDE293;
+            --work: #CCF0DF;
+            --growth: #D4BBFF;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ===== 初始化模态框 ===== */
+        #init-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-content h2 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+        }
+        .modal-content p {
+            color: var(--sub);
+            margin: 10px 0 20px 0;
+            font-size: 14px;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: 0.2s;
+        }
+        .modal-content input:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        .modal-content button {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-content button:hover {
+            opacity: 0.9;
+        }
+
+        /* ===== 头部 ===== */
+        .header {
+            padding: 44px 20px 15px;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 50;
+            border-bottom: 1px solid #eee;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: var(--accent);
+        }
+        .header-tagline {
+            font-size: 12px;
+            color: var(--sub);
+            margin: 0 0 15px 0;
+            font-style: italic;
+        }
+        .week-info {
+            font-size: 12px;
+            color: var(--text);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .week-date-range {
+            font-weight: 500;
+        }
+        .week-number {
+            background: var(--accent);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        .header-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #eee;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--sub);
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* ===== 头部控制 ===== */
+        .header-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .btn-small {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 12px;
+        }
+        .btn-sync {
+            background: #eee;
+        }
+        .btn-sync:hover {
+            background: #ddd;
+        }
+        .btn-export {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-export:hover {
+            opacity: 0.9;
+        }
+
+        /* ===== 主容器 ===== */
+        .container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        /* ===== 周视图 ===== */
+        .week-grid {
+            display: none;
+        }
+        .week-grid.active {
+            display: block;
+        }
+        .week-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .week-table td {
+            padding: 8px;
+            border: 1px solid #eee;
+            font-size: 11px;
+            text-align: center;
+            height: 35px;
+        }
+        .week-table th {
+            padding: 8px;
+            background: #f5f5f5;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .week-cell {
+            cursor: pointer;
+            position: relative;
+            transition: 0.2s;
+            border-radius: 4px;
+        }
+        .week-cell.task-health { background: var(--health); }
+        .week-cell.task-family { background: var(--family); }
+        .week-cell.task-work { background: var(--work); }
+        .week-cell.task-growth { background: var(--growth); }
+        .week-cell.task-health:hover,
+        .week-cell.task-family:hover,
+        .week-cell.task-work:hover,
+        .week-cell.task-growth:hover {
+            opacity: 0.8;
+        }
+
+        /* ===== 今日打卡视图 ===== */
+        .today-view {
+            display: none;
+        }
+        .today-view.active {
+            display: block;
+        }
+        .today-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .time-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .time-slot:hover {
+            border-color: var(--accent);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .slot-info {
+            flex: 1;
+        }
+        .slot-time {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .slot-task {
+            font-size: 12px;
+            color: var(--sub);
+        }
+        .slot-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-right: 4px;
+            background: #f0f0f0;
+        }
+        .slot-status {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .slot-status:hover {
+            transform: scale(1.1);
+        }
+        .slot-status.plan {
+            background: #f9f9f9;
+        }
+        .slot-status.done {
+            background: #d4f4dd;
+            border-color: #4caf50;
+        }
+        .slot-status.fail {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        /* ===== 复盘视图 ===== */
+        .review-view {
+            display: none;
+        }
+        .review-view.active {
+            display: block;
+        }
+        .review-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent);
+        }
+        .review-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .review-section textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+        }
+        .review-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-analyze {
+            flex: 1;
+            padding: 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-analyze:hover {
+            opacity: 0.9;
+        }
+        .btn-reminder {
+            flex: 1;
+            padding: 12px;
+            background: #eee;
+            color: var(--text);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-reminder:hover {
+            background: #ddd;
+        }
+        .analysis-result {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid var(--work);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+            font-size: 13px;
+            color: #555;
+        }
+
+        /* ===== 教学提示 ===== */
+        .tutorial-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            max-width: 250px;
+            z-index: 100;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .tutorial-popup h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: var(--accent);
+        }
+        .tutorial-popup p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--sub);
+            line-height: 1.5;
+        }
+        .close-tutorial {
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: var(--sub);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 15px 12px;
+            }
+            .header-title {
+                font-size: 16px;
+            }
+            .week-table td {
+                padding: 5px;
+                font-size: 10px;
+                height: 30px;
+            }
+        }
+
+        /* ===== 模态框 ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-box h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+        }
+        .category-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .cat-btn {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .cat-btn.selected {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.1);
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        .category-hint {
+            font-size: 11px;
+            color: var(--sub);
+            margin-bottom: 8px;
+            font-style: italic;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+        .tag-history {
+            margin-bottom: 15px;
+        }
+        .tag-history-title {
+            font-size: 11px;
+            color: var(--sub);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .tag-history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tag-history-btn {
+            padding: 4px 10px;
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tag-history-btn:hover {
+            background: #ddd;
+            border-color: var(--accent);
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-confirm {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-cancel {
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 初始化模态框 -->
+<div id="init-modal" class="init-modal">
+    <div class="modal-content">
+        <h2>欢迎来到人生脚本</h2>
+        <p>请输入你的名字</p>
+        <input type="text" id="user-name" placeholder="例如：小白" maxlength="20" onkeypress="if(event.key==='Enter') initializeApp()">
+        <button onclick="initializeApp()" id="init-btn">开始导演人生</button>
+    </div>
+</div>
+
+<!-- 头部 -->
+<div class="header">
+    <div class="header-title" id="header-title">人生脚本 - 加载中...</div>
+    <div class="header-tagline">你是你人生的导演 · 每一天都要精彩的活</div>
+    <div class="week-info">
+        <span class="week-date-range" id="week-date-range">计算中...</span>
+        <span class="week-number" id="week-number">第X周</span>
+    </div>
+    <div class="header-tabs">
+        <button class="tab-btn active" onclick="switchTab('week')">📅 周视图</button>
+        <button class="tab-btn" onclick="switchTab('today')">✅ 今日打卡</button>
+        <button class="tab-btn" onclick="switchTab('review')">📝 周复盘</button>
+        <button class="tab-btn" onclick="resetData()" title="清空所有数据" style="color: #dc3545; margin-left: auto;">🗑️ 清空</button>
+    </div>
+</div>
+
+<!-- 主容器 -->
+<div class="container">
+    <!-- 周视图 -->
+    <div class="week-grid active" id="week-grid">
+        <table class="week-table" id="week-table"></table>
+    </div>
+
+    <!-- 今日打卡视图 -->
+    <div class="today-view" id="today-view">
+        <div class="today-grid" id="today-grid"></div>
+    </div>
+
+    <!-- 周复盘视图 -->
+    <div class="review-view" id="review-view">
+        <div class="review-section">
+            <h3>✅ 本周做得很好的事</h3>
+            <textarea id="review-good" placeholder="例如：坚持了5天晨跑，每天都有1小时的专注工作时间..."></textarea>
+        </div>
+        <div class="review-section">
+            <h3>❌ 本周没做好的地方</h3>
+            <textarea id="review-bad" placeholder="例如：周三加班到晚上，没有完成阅读计划..."></textarea>
+        </div>
+        <div class="review-section">
+            <h3>💡 下周的改进计划</h3>
+            <textarea id="review-next" placeholder="例如：调整周三的时间安排，周末提前完成阅读..."></textarea>
+        </div>
+        <div class="review-buttons">
+            <button class="btn-analyze" onclick="analyzeWeek()">✨ 获取AI分析</button>
+            <button class="btn-reminder" onclick="setReminder()">🔔 设置复盘提醒</button>
+        </div>
+        <div id="analysis-result" class="analysis-result" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- 任务编辑模态框 -->
+<div class="modal" id="task-modal">
+    <div class="modal-box">
+        <h3>编辑任务</h3>
+        <h4 style="margin-top: 0; color: var(--sub);" id="modal-time">时间段</h4>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 12px; color: var(--sub); display: block; margin-bottom: 8px;">选择类别</label>
+            <div class="category-selector">
+                <button class="cat-btn" onclick="selectCategory('health')">🔵 健康习惯</button>
+                <button class="cat-btn" onclick="selectCategory('family')">🟡 家庭时间</button>
+                <button class="cat-btn" onclick="selectCategory('work')">💚 工作时间</button>
+                <button class="cat-btn" onclick="selectCategory('growth')">💜 自我成长</button>
+            </div>
+        </div>
+        <div class="category-hint" id="category-hint">选择类别后会看到提示</div>
+        <div class="tag-history" id="tag-history" style="display: none;">
+            <div class="tag-history-title">📚 你之前用过的标签</div>
+            <div class="tag-history-list" id="tag-history-list"></div>
+        </div>
+        <input type="text" class="modal-input" id="task-tag" placeholder="输入活动标签">
+        <div class="modal-buttons">
+            <button class="btn-confirm" onclick="saveTask()">✓ 确认</button>
+            <button class="btn-cancel" onclick="closeModal()">✕ 取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const HOURS = Array.from({length: 17}, (_, i) => i + 7);
+    const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    const CATEGORIES = {
+        health: { 
+            name: '健康习惯', 
+            emoji: '🔵', 
+            color: 'var(--health)',
+            hint: '🎭 你可以是：懒虫 | 跑步狂 | 瑜伽仙女 | 冥想者 | 睡眠卫士'
+        },
+        family: { 
+            name: '家庭时间', 
+            emoji: '🟡', 
+            color: 'var(--family)',
+            hint: '🎭 你可以是：陪伴侠 | 家务卫士 | 奶爸奶妈 | 做饭大厨 | 故事讲述者'
+        },
+        work: { 
+            name: '工作时间', 
+            emoji: '💚', 
+            color: 'var(--work)',
+            hint: '🎭 你可以是：打工狗 | 写作家 | 代码侠 | 会议达人 | 项目经理'
+        },
+        growth: { 
+            name: '自我成长', 
+            emoji: '💜', 
+            color: 'var(--growth)',
+            hint: '🎭 你可以是：阅读虫 | 思考者 | 学习者 | 日记作家 | 知识猎人'
+        }
+    };
+
+    let userName = '';
+    let weekData = { tasks: {}, review: { good: '', bad: '', next: '' } };
+    let selectedCategory = null;
+    let selectedSlot = null;
+    let reminderTime = '18:00';
+    let tagHistory = {}; // 存储每个类别的标签历史
+
+    /* ===== 初始化 ===== */
+    function initializeApp() {
+        try {
+            const btn = document.getElementById('init-btn');
+            btn.disabled = true;
+            btn.textContent = '加载中...';
+            
+            const nameInput = document.getElementById('user-name');
+            userName = nameInput.value.trim();
+            
+            if (!userName) {
+                alert('请输入你的名字');
+                btn.disabled = false;
+                btn.textContent = '开始导演人生';
+                return;
+            }
+            
+            console.log('保存用户名:', userName);
+            localStorage.setItem('user-name', userName);
+            
+            console.log('隐藏初始化框');
+            document.getElementById('init-modal').style.display = 'none';
+            
+            console.log('更新头部');
+            updateHeader();
+            
+            console.log('加载数据');
+            loadData();
+            loadTagHistory();
+            
+            console.log('加载复盘数据');
+            loadReviewData();
+            
+            console.log('显示教学提示');
+            showTutorial();
+            
+            console.log('设置提醒');
+            setupReminder();
+            
+            console.log('异步渲染视图');
+            // 延迟渲染，避免阻塞
+            setTimeout(() => {
+                console.log('开始渲染周视图');
+                renderWeekGrid();
+                console.log('开始渲染今日打卡');
+                renderTodayView();
+                console.log('✅ 渲染完成');
+            }, 100);
+            
+            btn.disabled = false;
+            btn.textContent = '开始导演人生';
+        } catch (error) {
+            console.error('❌ 初始化错误:', error);
+            alert('初始化失败：' + error.message);
+            document.getElementById('init-btn').disabled = false;
+            document.getElementById('init-btn').textContent = '开始导演人生';
+        }
+    }
+
+    function loadData() {
+        const stored = localStorage.getItem('life-script-week');
+        if (stored) {
+            weekData = JSON.parse(stored);
+        }
+    }
+
+    function loadTagHistory() {
+        const stored = localStorage.getItem('tag-history');
+        if (stored) {
+            tagHistory = JSON.parse(stored);
+        } else {
+            tagHistory = { health: [], family: [], work: [], growth: [] };
+        }
+    }
+
+    function saveTagHistory() {
+        localStorage.setItem('tag-history', JSON.stringify(tagHistory));
+    }
+    }
+
+    function saveData() {
+        localStorage.setItem('life-script-week', JSON.stringify(weekData));
+    }
+
+    /* ===== 头部更新 ===== */
+    function updateHeader() {
+        document.getElementById('header-title').textContent = `人生脚本 - ${userName}`;
+        updateWeekInfo();
+    }
+
+    function updateWeekInfo() {
+        const now = new Date();
+        const year = now.getFullYear();
+        
+        // 计算本周第几周
+        const firstDay = new Date(year, 0, 1);
+        const pastDaysOfYear = (now - firstDay) / 86400000;
+        const week = Math.ceil((pastDaysOfYear + firstDay.getDay() + 1) / 7);
+        
+        // 计算本周的起止日期
+        const dayOfWeek = now.getDay() || 7;
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - dayOfWeek + 1);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+
+        const startMonth = weekStart.getMonth() + 1;
+        const startDate = weekStart.getDate();
+        const endMonth = weekEnd.getMonth() + 1;
+        const endDate = weekEnd.getDate();
+
+        document.getElementById('week-date-range').textContent = 
+            `${year}年第${week}周 · ${startMonth}月${startDate}日 ~ ${endMonth}月${endDate}日`;
+        document.getElementById('week-number').textContent = `第${week}周`;
+    }
+
+    /* ===== 标签页切换 ===== */
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.week-grid, .today-view, .review-view').forEach(el => el.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(tab === 'week' ? 'week-grid' : tab === 'today' ? 'today-view' : 'review-view').classList.add('active');
+    }
+
+    /* ===== 周视图渲染 ===== */
+    function renderWeekGrid() {
+        try {
+            const table = document.getElementById('week-table');
+            if (!table) {
+                console.error('week-table 元素不存在');
+                return;
+            }
+            
+            let html = '<tr>';
+            html += '<th style="font-weight: 600;">时间</th>';
+            DAYS.forEach(day => {
+                html += `<th style="font-weight: 600;">${day}</th>`;
+            });
+            html += '</tr>';
+
+            HOURS.forEach(hour => {
+                html += '<tr>';
+                html += `<td style="font-weight: 500; background: #f5f5f5;">${hour}:00</td>`;
+                
+                for (let day = 0; day < 7; day++) {
+                    const key = `${day}-${hour}`;
+                    const task = weekData.tasks[key];
+                    
+                    if (task) {
+                        const status = task.status === 'done' ? '✅' : task.status === 'fail' ? '❌' : '⭕';
+                        html += `<td class="week-cell task-${task.category}" onclick="openEditModal(${day}, ${hour})" style="cursor: pointer;">${task.tag}<br><span style="font-size: 10px;">${status}</span></td>`;
+                    } else {
+                        html += `<td class="week-cell" onclick="openEditModal(${day}, ${hour})" style="cursor: pointer;"></td>`;
+                    }
+                }
+                html += '</tr>';
+            });
+
+            table.innerHTML = html;
+        } catch (error) {
+            console.error('renderWeekGrid 错误:', error);
+        }
+    }
+
+    /* ===== 今日打卡视图 ===== */
+    function renderTodayView() {
+        const now = new Date();
+        const today = (now.getDay() || 7) - 1;
+        const grid = document.getElementById('today-grid');
+        grid.innerHTML = '';
+
+        HOURS.forEach(hour => {
+            const key = `${today}-${hour}`;
+            const task = weekData.tasks[key];
+            
+            const slot = document.createElement('div');
+            slot.className = 'time-slot';
+            
+            if (task) {
+                const statusClass = `slot-status ${task.status}`;
+                slot.innerHTML = `
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div class="slot-task">
+                            ${CATEGORIES[task.category].emoji}
+                            <span class="slot-tag">${task.tag}</span>
+                        </div>
+                    </div>
+                    <div class="${statusClass}" onclick="toggleStatus(event, '${key}')" style="cursor: pointer;">
+                        ${task.status === 'done' ? '✅' : task.status === 'fail' ? '❌' : '⭕'}
+                    </div>
+                `;
+            } else {
+                slot.innerHTML = `
+                    <div class="slot-info">
+                        <div class="slot-time">${hour}:00</div>
+                        <div class="slot-task" style="color: #ccc;">未安排</div>
+                    </div>
+                    <div style="color: #999;">+</div>
+                `;
+                slot.onclick = () => openEditModal(today, hour);
+            }
+
+            grid.appendChild(slot);
+        });
+    }
+
+    /* ===== 状态切换 ===== */
+    function toggleStatus(event, key) {
+        event.stopPropagation();
+        const task = weekData.tasks[key];
+        const statuses = ['plan', 'done', 'fail'];
+        const currentIndex = statuses.indexOf(task.status);
+        task.status = statuses[(currentIndex + 1) % 3];
+        saveData();
+        renderWeekGrid();
+        renderTodayView();
+    }
+
+    /* ===== 任务编辑 ===== */
+    function openEditModal(day, hour) {
+        selectedSlot = { day, hour };
+        const key = `${day}-${hour}`;
+        const task = weekData.tasks[key];
+        
+        document.getElementById('modal-time').textContent = `${DAYS[day]} ${hour}:00`;
+        document.getElementById('task-tag').value = task ? task.tag : '';
+        
+        selectedCategory = task ? task.category : null;
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('selected'));
+        if (selectedCategory) {
+            document.querySelector(`.cat-btn:nth-child(${Object.keys(CATEGORIES).indexOf(selectedCategory) + 1})`).classList.add('selected');
+            updateCategoryHint(selectedCategory);
+        }
+
+        document.getElementById('task-modal').classList.add('show');
+    }
+
+    function selectCategory(cat) {
+        selectedCategory = cat;
+        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('selected'));
+        document.querySelectorAll('.cat-btn').forEach((btn, idx) => {
+            if (Object.keys(CATEGORIES)[idx] === cat) btn.classList.add('selected');
+        });
+        updateCategoryHint(cat);
+        updateTagHistory(cat);
+    }
+
+    function updateCategoryHint(cat) {
+        const hint = CATEGORIES[cat].hint;
+        document.getElementById('category-hint').textContent = hint;
+        document.getElementById('task-tag').placeholder = `例如：${hint.split('|')[1].trim()}`;
+    }
+
+    function updateTagHistory(cat) {
+        const history = tagHistory[cat] || [];
+        const historyDiv = document.getElementById('tag-history');
+        
+        if (history.length > 0) {
+            historyDiv.style.display = 'block';
+            const historyList = document.getElementById('tag-history-list');
+            historyList.innerHTML = '';
+            
+            // 显示最近使用的前5个
+            history.slice(-5).reverse().forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = 'tag-history-btn';
+                btn.textContent = tag;
+                btn.onclick = () => {
+                    document.getElementById('task-tag').value = tag;
+                    document.getElementById('task-tag').focus();
+                };
+                historyList.appendChild(btn);
+            });
+        } else {
+            historyDiv.style.display = 'none';
+        }
+    }
+
+    function saveTask() {
+        if (!selectedCategory) {
+            alert('请选择类别');
+            return;
+        }
+        const tag = document.getElementById('task-tag').value.trim();
+        if (!tag) {
+            alert('请输入活动标签');
+            return;
+        }
+
+        // 记录标签历史
+        if (!tagHistory[selectedCategory]) {
+            tagHistory[selectedCategory] = [];
+        }
+        // 去重：如果已存在则移除后重新添加到末尾
+        tagHistory[selectedCategory] = tagHistory[selectedCategory].filter(t => t !== tag);
+        tagHistory[selectedCategory].push(tag);
+        // 只保留最多20个历史记录
+        if (tagHistory[selectedCategory].length > 20) {
+            tagHistory[selectedCategory].shift();
+        }
+        saveTagHistory();
+
+        const key = `${selectedSlot.day}-${selectedSlot.hour}`;
+        weekData.tasks[key] = { category: selectedCategory, tag, status: 'plan' };
+        saveData();
+        renderWeekGrid();
+        renderTodayView();
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('task-modal').classList.remove('show');
+    }
+
+    /* ===== 清空数据 ===== */
+    function resetData() {
+        if (confirm('⚠️ 确定要清空所有数据吗？（用户名会保留，但所有计划和打卡记录都会删除）')) {
+            weekData = { tasks: {}, review: { good: '', bad: '', next: '' } };
+            localStorage.removeItem('life-script-week');
+            renderWeekGrid();
+            renderTodayView();
+            loadReviewData();
+            alert('✅ 已清空所有数据！');
+        }
+    }
+
+    /* ===== 复盘数据 ===== */
+    function loadReviewData() {
+        document.getElementById('review-good').value = weekData.review.good || '';
+        document.getElementById('review-bad').value = weekData.review.bad || '';
+        document.getElementById('review-next').value = weekData.review.next || '';
+    }
+
+    function saveReviewData() {
+        weekData.review = {
+            good: document.getElementById('review-good').value,
+            bad: document.getElementById('review-bad').value,
+            next: document.getElementById('review-next').value
+        };
+        saveData();
+    }
+
+    /* ===== AI 分析 ===== */
+    async function analyzeWeek() {
+        saveReviewData();
+        const resultDiv = document.getElementById('analysis-result');
+        resultDiv.textContent = '分析中...';
+        resultDiv.style.display = 'block';
+
+        try {
+            const response = await fetch(`/api/analyze/${userName}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(weekData)
+            });
+            const data = await response.json();
+            resultDiv.textContent = data.analysis || '暂无分析结果';
+        } catch (error) {
+            resultDiv.textContent = '分析失败，请稍后重试';
+            console.error('分析错误:', error);
+        }
+    }
+
+    /* ===== 提醒功能 ===== */
+    function setReminder() {
+        const time = prompt('设置复盘提醒时间（如 18:00）:', reminderTime);
+        if (time && /^\d{1,2}:\d{2}$/.test(time)) {
+            reminderTime = time;
+            localStorage.setItem('reminder-time', reminderTime);
+            alert(`已设置为每周日 ${reminderTime} 提醒复盘`);
+        }
+    }
+
+    function setupReminder() {
+        reminderTime = localStorage.getItem('reminder-time') || '18:00';
+        setInterval(checkReminder, 60000);
+    }
+
+    function checkReminder() {
+        const now = new Date();
+        const today = now.getDay();
+        const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        if (today === 0 && time === reminderTime) {
+            if (Notification.permission === 'granted') {
+                new Notification('人生脚本', {
+                    body: '是时候进行周复盘了！反思这一周的执行情况。',
+                    icon: '/icon-192x192.png'
+                });
+            }
+        }
+    }
+
+    /* ===== 教学提示 ===== */
+    function showTutorial() {
+        const tutorial = document.createElement('div');
+        tutorial.className = 'tutorial-popup';
+        tutorial.innerHTML = `
+            <button class="close-tutorial" onclick="this.parentElement.remove()">×</button>
+            <h4>👋 欢迎使用人生脚本！</h4>
+            <p>1. 先在<strong>周视图</strong>规划这周的计划<br>
+               2. 在<strong>今日打卡</strong>标记完成情况<br>
+               3. 周末在<strong>周复盘</strong>获取AI分析</p>
+        `;
+        document.body.appendChild(tutorial);
+    }
+
+    /* ===== 加载初始化 ===== */
+    window.addEventListener('load', () => {
+        const stored = localStorage.getItem('user-name');
+        if (stored) {
+            userName = stored;
+            document.getElementById('init-modal').style.display = 'none';
+            updateHeader();
+            loadData();
+            loadTagHistory();
+            renderWeekGrid();
+            renderTodayView();
+            loadReviewData();
+            setupReminder();
+        } else {
+            document.getElementById('user-name').focus();
+        }
+
+        // 请求通知权限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    });
+
+    // 自动保存
+    setInterval(() => {
+        saveData();
+        saveReviewData();
+    }, 30000);
+
+    // 页面离开时保存
+    window.addEventListener('beforeunload', () => {
+        saveData();
+        saveReviewData();
+    });
+</script>
+
+</body>
+</html>
