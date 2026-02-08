@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>云端数据测试工具</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    if (typeof window.supabase === 'undefined') {
+      document.write('<script src="https://gcore.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
+    }
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .success { color: green; }
+    .error { color: red; }
+    .info { color: blue; }
+  </style>
+</head>
+<body>
+  <h1>云端数据测试工具</h1>
+
+  <div class="section">
+    <h3>步骤 1: 登录</h3>
+    <input type="email" id="email" placeholder="邮箱" value="oppozhoulina@126.com">
+    <input type="password" id="password" placeholder="密码">
+    <button onclick="login()">登录</button>
+    <div id="loginStatus"></div>
+  </div>
+
+  <div class="section">
+    <h3>步骤 2: 查看云端数据</h3>
+    <button onclick="checkCloudData()">查看云端数据</button>
+    <div id="cloudData"></div>
+  </div>
+
+  <div class="section">
+    <h3>步骤 3: 清理云端数据</h3>
+    <button onclick="deleteCloudData()">删除云端数据</button>
+    <div id="deleteStatus"></div>
+  </div>
+
+  <div class="section">
+    <h3>步骤 4: 测试上传</h3>
+    <button onclick="testUpload()">上传测试数据</button>
+    <div id="uploadStatus"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://fzxdlejmubwfnraqvfeo.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_ToOJlsvadxHssbZN6UI1cQ_NrA6Z2X7';
+    let supabase = null;
+    let currentUser = null;
+
+    function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      supabase.auth.signInWithPassword({ email, password })
+        .then(({ data, error }) => {
+          if (error) {
+            document.getElementById('loginStatus').innerHTML =
+              `<span class="error">登录失败: ${error.message}</span>`;
+          } else {
+            currentUser = data.user;
+            document.getElementById('loginStatus').innerHTML =
+              `<span class="success">登录成功! 用户ID: ${currentUser.id}</span>`;
+          }
+        });
+    }
+
+    function checkCloudData() {
+      if (!currentUser) {
+        document.getElementById('cloudData').innerHTML =
+          `<span class="error">请先登录</span>`;
+        return;
+      }
+
+      supabase
+        .from('user_data')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .then(({ data, error }) => {
+          if (error) {
+            document.getElementById('cloudData').innerHTML =
+              `<span class="error">查询失败: ${error.message}</span>`;
+          } else if (data && data.length > 0) {
+            const appState = data[0].app_state;
+            document.getElementById('cloudData').innerHTML = `
+              <span class="success">找到 ${data.length} 条数据</span>
+              <pre>${JSON.stringify({
+                id: data[0].id,
+                created_at: data[0].created_at,
+                updated_at: data[0].updated_at,
+                userName: appState?.userName || '(无)',
+                hasWeeklyData: !!(appState?.weeklyData),
+                weeklyDataKeys: appState?.weeklyData ? Object.keys(appState.weeklyData) : [],
+                hasCategories: !!(appState?.categories),
+                allData: appState
+              }, null, 2)}</pre>
+            `;
+          } else {
+            document.getElementById('cloudData').innerHTML =
+              `<span class="info">云端没有数据</span>`;
+          }
+        });
+    }
+
+    function deleteCloudData() {
+      if (!currentUser) {
+        document.getElementById('deleteStatus').innerHTML =
+          `<span class="error">请先登录</span>`;
+        return;
+      }
+
+      if (!confirm('确定要删除所有云端数据吗？')) {
+        return;
+      }
+
+      supabase
+        .from('user_data')
+        .delete()
+        .eq('user_id', currentUser.id)
+        .then(({ error }) => {
+          if (error) {
+            document.getElementById('deleteStatus').innerHTML =
+              `<span class="error">删除失败: ${error.message}</span>`;
+          } else {
+            document.getElementById('deleteStatus').innerHTML =
+              `<span class="success">云端数据已删除</span>`;
+          }
+        });
+    }
+
+    function testUpload() {
+      if (!currentUser) {
+        document.getElementById('uploadStatus').innerHTML =
+          `<span class="error">请先登录</span>`;
+        return;
+      }
+
+      const testData = {
+        userName: '测试用户',
+        categories: { test: '测试' },
+        weeklyData: { '2026-W06': { test: '数据' } },
+        _syncedAt: new Date().toISOString()
+      };
+
+      supabase
+        .from('user_data')
+        .insert({
+          user_id: currentUser.id,
+          app_state: testData,
+          data_type: 'app_state'
+        })
+        .then(({ error }) => {
+          if (error) {
+            document.getElementById('uploadStatus').innerHTML =
+              `<span class="error">上传失败: ${error.message}</span>`;
+          } else {
+            document.getElementById('uploadStatus').innerHTML =
+              `<span class="success">测试数据已上传</span>`;
+          }
+        });
+    }
+  </script>
+</body>
+</html>

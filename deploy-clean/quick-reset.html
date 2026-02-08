@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>云端数据测试工具</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    // 如果 unpkg 失败，尝试其他 CDN
+    if (typeof window.supabase === 'undefined') {
+      document.write('<script src="https://gcore.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background: #f0f2f5; }
+    .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    h1 { margin-bottom: 20px; }
+    .section { background: #f8f9fa; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    .section h3 { margin-bottom: 15px; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+    button { width: 100%; padding: 14px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #0056b3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #log { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; min-height: 100px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 云端数据诊断工具</h1>
+
+    <div class="section">
+      <h3>步骤 1: 登录</h3>
+      <input type="email" id="email" value="oppozhoulina@126.com" placeholder="邮箱">
+      <input type="password" id="password" placeholder="密码">
+      <button id="loginBtn">登录</button>
+    </div>
+
+    <div class="section">
+      <h3>步骤 2: 诊断</h3>
+      <button id="diagnoseBtn" disabled>检查云端数据</button>
+    </div>
+
+    <div class="section">
+      <h3>步骤 3: 操作</h3>
+      <button id="resetBtn" disabled>清理无效数据</button>
+    </div>
+
+    <div class="section">
+      <h3>日志</h3>
+      <div id="log">等待操作...</div>
+    </div>
+  </div>
+
+  <script>
+    // 使用模块作用域避免全局变量冲突
+    (function() {
+      const SUPABASE_URL = 'https://fzxdlejmubwfnraqvfeo.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_ToOJlsvadxHssbZN6UI1cQ_NrA6Z2X7';
+      let client = null;
+      let user = null;
+
+      function log(msg) {
+        const el = document.getElementById('log');
+        const time = new Date().toLocaleTimeString();
+        el.textContent = `[${time}] ${msg}\n` + el.textContent;
+        el.scrollTop = el.scrollHeight;
+      }
+
+      log('✅ 工具已加载，等待操作...');
+
+      // 登录
+      document.getElementById('loginBtn').onclick = async function() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+          log('❌ 请输入邮箱和密码');
+          return;
+        }
+
+        this.disabled = true;
+        this.textContent = '登录中...';
+
+        try {
+          if (!window.supabase) {
+            throw new Error('Supabase SDK 未加载');
+          }
+
+          client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          log('✅ 客户端已创建');
+
+          const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+          if (error) throw error;
+          if (!data.user) throw new Error('登录失败：未返回用户信息');
+
+          user = data.user;
+          log('✅ 登录成功!');
+          log('用户: ' + user.email);
+
+          document.getElementById('diagnoseBtn').disabled = false;
+          document.getElementById('resetBtn').disabled = false;
+          this.textContent = '✅ 已登录';
+
+        } catch (e) {
+          log('❌ 登录失败: ' + e.message);
+          this.disabled = false;
+          this.textContent = '登录';
+        }
+      };
+
+      // 诊断
+      document.getElementById('diagnoseBtn').onclick = async function() {
+        this.disabled = true;
+        log('📡 查询云端数据...');
+
+        try {
+          const { data, error } = await client
+            .from('user_data')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (error) throw error;
+
+          if (!data || data.length === 0) {
+            log('ℹ️ 云端没有数据');
+          } else {
+            log('✅ 找到 ' + data.length + ' 条数据');
+            data.forEach((row, i) => {
+              const appState = row.app_state || {};
+              log(`数据 ${i + 1}:`);
+              log(`  - ID: ${row.id}`);
+              log(`  - 创建时间: ${new Date(row.created_at).toLocaleString('zh-CN')}`);
+              log(`  - 更新时间: ${new Date(row.updated_at).toLocaleString('zh-CN')}`);
+              log(`  - userName: ${appState.userName || '(无)'}`);
+              log(`  - categories: ${appState.categories ? '有' : '无'}`);
+              log(`  - weeklyData: ${appState.weeklyData ? Object.keys(appState.weeklyData).length + ' 周' : '无'}`);
+            });
+          }
+
+        } catch (e) {
+          log('❌ 查询失败: ' + e.message);
+        } finally {
+          this.disabled = false;
+        }
+      };
+
+      // 清理
+      document.getElementById('resetBtn').onclick = async function() {
+        if (!confirm('确定要删除所有云端数据吗？')) return;
+
+        this.disabled = true;
+        log('📡 删除云端数据...');
+
+        try {
+          const { error } = await client
+            .from('user_data')
+            .delete()
+            .eq('user_id', user.id);
+
+          if (error) throw error;
+          log('✅ 云端数据已删除');
+          log('💡 现在可以在主应用中重新上传数据');
+
+        } catch (e) {
+          log('❌ 删除失败: ' + e.message);
+        } finally {
+          this.disabled = false;
+        }
+      };
+
+      // 键盘支持
+      document.getElementById('password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') document.getElementById('loginBtn').click();
+      });
+
+    })();
+  </script>
+</body>
+</html>

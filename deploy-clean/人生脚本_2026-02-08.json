@@ -1,0 +1,1373 @@
+{
+  "userName": "周小白",
+  "categories": {
+    "health": {
+      "name": "健康习惯",
+      "color": "#A8D5BA",
+      "tags": [
+        "冥想",
+        "运动",
+        "瑜伽",
+        "睡眠",
+        "营养餐"
+      ]
+    },
+    "family": {
+      "name": "家庭时间",
+      "color": "#FFD4A3",
+      "tags": [
+        "陪孩子",
+        "陪父母",
+        "家务",
+        "亲子活动"
+      ]
+    },
+    "work": {
+      "name": "工作时间",
+      "color": "#A5C9E0",
+      "tags": [
+        "加班狗",
+        "会议",
+        "项目",
+        "学习",
+        "牛马",
+        "狗🐶"
+      ]
+    },
+    "growth": {
+      "name": "自我成长",
+      "color": "#E0B3D9",
+      "tags": [
+        "写作",
+        "阅读",
+        "思考",
+        "学习",
+        "Ai探索",
+        "一对一"
+      ]
+    },
+    "custom": {
+      "name": "休闲娱乐",
+      "color": "#D4D4D4",
+      "tags": [
+        "追剧",
+        "游戏",
+        "社交",
+        "购物"
+      ]
+    }
+  },
+  "weeklyData": {
+    "2026-W06": {
+      "plan": {
+        "0": {
+          "7": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "8": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "9": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "10": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "11": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "12": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "13": {
+            "category": "work",
+            "tag": "加班狗"
+          },
+          "14": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "15": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "16": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "17": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "18": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "19": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "20": {
+            "category": "family",
+            "tag": "陪孩子"
+          },
+          "21": {
+            "category": "growth",
+            "tag": "学习"
+          },
+          "22": {
+            "category": "growth",
+            "tag": "写作"
+          },
+          "23": {
+            "category": "custom",
+            "tag": "追剧"
+          }
+        },
+        "1": {
+          "7": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "8": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "9": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "10": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "11": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "12": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "13": {
+            "category": "work",
+            "tag": "加班狗"
+          },
+          "14": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "15": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "16": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "17": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "18": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "19": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "20": {
+            "category": "family",
+            "tag": "陪孩子"
+          },
+          "21": {
+            "category": "growth",
+            "tag": "写作"
+          },
+          "22": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "23": {
+            "category": "custom",
+            "tag": "追剧"
+          }
+        },
+        "2": {
+          "7": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "8": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "9": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "10": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "11": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "12": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "13": {
+            "category": "work",
+            "tag": "加班狗"
+          },
+          "14": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "15": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "16": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "17": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "18": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "19": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "20": {
+            "category": "family",
+            "tag": "陪孩子"
+          },
+          "21": {
+            "category": "growth",
+            "tag": "学习"
+          },
+          "22": {
+            "category": "growth",
+            "tag": "写作"
+          },
+          "23": {
+            "category": "growth",
+            "tag": "Ai探索"
+          }
+        },
+        "3": {
+          "7": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "8": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "9": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "10": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "11": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "12": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "13": {
+            "category": "work",
+            "tag": "加班狗"
+          },
+          "14": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "15": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "16": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "17": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "18": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "19": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "20": {
+            "category": "family",
+            "tag": "陪孩子"
+          },
+          "21": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "22": {
+            "category": "growth",
+            "tag": "写作"
+          },
+          "23": {
+            "category": "custom",
+            "tag": "追剧"
+          }
+        },
+        "4": {
+          "7": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "8": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "9": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "10": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "11": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "12": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "13": {
+            "category": "work",
+            "tag": "加班狗"
+          },
+          "14": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "15": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "16": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "17": {
+            "category": "work",
+            "tag": "牛马"
+          },
+          "18": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "19": {
+            "category": "work",
+            "tag": "狗🐶"
+          },
+          "20": {
+            "category": "family",
+            "tag": "陪孩子"
+          },
+          "21": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "22": {
+            "category": "growth",
+            "tag": "写作"
+          },
+          "23": {
+            "category": "growth",
+            "tag": "写作"
+          }
+        },
+        "5": {
+          "7": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "8": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "9": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "10": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "11": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "12": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "13": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "14": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "15": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "16": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "17": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "18": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "19": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "20": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "21": {
+            "category": "family",
+            "tag": "陪父母"
+          },
+          "22": {
+            "category": "growth",
+            "tag": "学习"
+          },
+          "23": {
+            "category": "custom",
+            "tag": "追剧"
+          }
+        },
+        "6": {
+          "7": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "8": {
+            "category": "health",
+            "tag": "睡眠"
+          },
+          "9": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "10": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "11": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "12": {
+            "category": "growth",
+            "tag": "Ai探索"
+          },
+          "13": {
+            "category": "growth",
+            "tag": "学习"
+          },
+          "14": {
+            "category": "growth",
+            "tag": "学习"
+          },
+          "15": {
+            "category": "growth",
+            "tag": "一对一"
+          },
+          "16": {
+            "category": "growth",
+            "tag": "一对一"
+          },
+          "17": {
+            "category": "growth",
+            "tag": "学习"
+          },
+          "18": {
+            "category": "growth",
+            "tag": "学习"
+          },
+          "19": {
+            "category": "growth",
+            "tag": "写作"
+          },
+          "20": {
+            "category": "growth",
+            "tag": "写作"
+          },
+          "21": {
+            "category": "custom",
+            "tag": "追剧"
+          },
+          "22": {
+            "category": "custom",
+            "tag": "追剧"
+          },
+          "23": {
+            "category": "custom",
+            "tag": "追剧"
+          }
+        }
+      },
+      "checkin": {
+        "0": {
+          "7": "done",
+          "8": "done",
+          "9": "done",
+          "10": "done",
+          "11": "done",
+          "12": "done",
+          "13": "done",
+          "14": "done",
+          "15": "done",
+          "16": "done",
+          "17": "done",
+          "18": "done",
+          "19": "done",
+          "20": "done",
+          "21": "done",
+          "22": "done",
+          "23": "done"
+        },
+        "1": {
+          "7": "done",
+          "8": "done",
+          "9": "done",
+          "10": "done",
+          "11": "done",
+          "12": "done",
+          "13": "done",
+          "14": "done",
+          "16": "done",
+          "17": "done",
+          "18": "done",
+          "19": "done",
+          "20": "done",
+          "21": {
+            "status": "undone",
+            "reason": {
+              "category": "custom",
+              "tag": "购物"
+            }
+          },
+          "22": {
+            "status": "undone",
+            "reason": {
+              "category": "custom",
+              "tag": "购物"
+            }
+          },
+          "23": {
+            "status": "undone",
+            "reason": {
+              "category": "growth",
+              "tag": "写作"
+            }
+          }
+        },
+        "2": {
+          "7": "done",
+          "8": "done",
+          "9": "done",
+          "10": "done",
+          "11": "done",
+          "12": "done",
+          "13": "done",
+          "14": "done",
+          "15": "done",
+          "16": "done",
+          "17": "done",
+          "18": "done",
+          "19": "done",
+          "20": "done",
+          "21": "done",
+          "22": "done",
+          "23": "done"
+        },
+        "3": {
+          "7": "done",
+          "8": "done",
+          "9": "done",
+          "10": "done",
+          "11": "done",
+          "12": "done",
+          "13": "done",
+          "14": "done",
+          "15": "done",
+          "16": "done",
+          "17": "done",
+          "18": "done",
+          "19": "done",
+          "20": "done",
+          "21": "done",
+          "22": "done",
+          "23": "done"
+        },
+        "4": {
+          "7": "done",
+          "8": "done",
+          "9": "done",
+          "10": "done",
+          "11": "done",
+          "12": "done",
+          "13": "done",
+          "14": "done",
+          "15": "done",
+          "16": "done",
+          "17": "done",
+          "18": "done",
+          "19": "done",
+          "20": "done",
+          "21": "done",
+          "22": "done",
+          "23": "done"
+        },
+        "5": {
+          "7": "done",
+          "8": "done",
+          "9": "done",
+          "10": "done",
+          "11": "done",
+          "12": "done",
+          "13": "done",
+          "14": "done",
+          "15": "done",
+          "16": "done",
+          "17": "done",
+          "18": "done",
+          "19": "done",
+          "20": "done",
+          "21": "done"
+        },
+        "6": {
+          "7": "done",
+          "8": "done",
+          "9": "done",
+          "10": "done",
+          "11": "done",
+          "12": "done",
+          "13": "done",
+          "14": "done",
+          "15": "done",
+          "16": "done",
+          "17": "done",
+          "18": {
+            "status": "undone",
+            "reason": {
+              "category": "health",
+              "tag": "冥想"
+            }
+          }
+        }
+      },
+      "notes": {
+        "highlight": "AI探索制作了属于自己的App\n工作一切进展顺利",
+        "ng": "健康，睡眠时间比较少",
+        "thinking": "完全感觉时间不够用。期待假期。我目前对Ai编程特别感觉快乐和兴奋！开发自己的产品。"
+      }
+    },
+    "2026-02-notes": {
+      "achievement": "有成就感。",
+      "challenge": "有困难",
+      "goals": "1\n2\n3"
+    }
+  },
+  "weekPlan": {
+    "0": {
+      "7": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "8": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "9": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "10": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "11": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "12": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "13": {
+        "category": "work",
+        "tag": "加班狗"
+      },
+      "14": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "15": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "16": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "17": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "18": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "19": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "20": {
+        "category": "family",
+        "tag": "陪孩子"
+      },
+      "21": {
+        "category": "growth",
+        "tag": "学习"
+      },
+      "22": {
+        "category": "growth",
+        "tag": "写作"
+      },
+      "23": {
+        "category": "custom",
+        "tag": "追剧"
+      }
+    },
+    "1": {
+      "7": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "8": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "9": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "10": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "11": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "12": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "13": {
+        "category": "work",
+        "tag": "加班狗"
+      },
+      "14": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "15": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "16": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "17": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "18": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "19": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "20": {
+        "category": "family",
+        "tag": "陪孩子"
+      },
+      "21": {
+        "category": "growth",
+        "tag": "写作"
+      },
+      "22": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "23": {
+        "category": "custom",
+        "tag": "追剧"
+      }
+    },
+    "2": {
+      "7": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "8": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "9": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "10": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "11": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "12": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "13": {
+        "category": "work",
+        "tag": "加班狗"
+      },
+      "14": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "15": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "16": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "17": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "18": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "19": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "20": {
+        "category": "family",
+        "tag": "陪孩子"
+      },
+      "21": {
+        "category": "growth",
+        "tag": "学习"
+      },
+      "22": {
+        "category": "growth",
+        "tag": "写作"
+      },
+      "23": {
+        "category": "growth",
+        "tag": "Ai探索"
+      }
+    },
+    "3": {
+      "7": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "8": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "9": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "10": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "11": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "12": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "13": {
+        "category": "work",
+        "tag": "加班狗"
+      },
+      "14": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "15": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "16": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "17": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "18": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "19": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "20": {
+        "category": "family",
+        "tag": "陪孩子"
+      },
+      "21": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "22": {
+        "category": "growth",
+        "tag": "写作"
+      },
+      "23": {
+        "category": "custom",
+        "tag": "追剧"
+      }
+    },
+    "4": {
+      "7": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "8": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "9": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "10": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "11": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "12": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "13": {
+        "category": "work",
+        "tag": "加班狗"
+      },
+      "14": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "15": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "16": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "17": {
+        "category": "work",
+        "tag": "牛马"
+      },
+      "18": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "19": {
+        "category": "work",
+        "tag": "狗🐶"
+      },
+      "20": {
+        "category": "family",
+        "tag": "陪孩子"
+      },
+      "21": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "22": {
+        "category": "growth",
+        "tag": "写作"
+      },
+      "23": {
+        "category": "growth",
+        "tag": "写作"
+      }
+    },
+    "5": {
+      "7": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "8": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "9": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "10": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "11": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "12": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "13": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "14": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "15": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "16": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "17": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "18": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "19": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "20": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "21": {
+        "category": "family",
+        "tag": "陪父母"
+      },
+      "22": {
+        "category": "growth",
+        "tag": "学习"
+      },
+      "23": {
+        "category": "custom",
+        "tag": "追剧"
+      }
+    },
+    "6": {
+      "7": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "8": {
+        "category": "health",
+        "tag": "睡眠"
+      },
+      "9": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "10": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "11": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "12": {
+        "category": "growth",
+        "tag": "Ai探索"
+      },
+      "13": {
+        "category": "growth",
+        "tag": "学习"
+      },
+      "14": {
+        "category": "growth",
+        "tag": "学习"
+      },
+      "15": {
+        "category": "growth",
+        "tag": "一对一"
+      },
+      "16": {
+        "category": "growth",
+        "tag": "一对一"
+      },
+      "17": {
+        "category": "growth",
+        "tag": "学习"
+      },
+      "18": {
+        "category": "growth",
+        "tag": "学习"
+      },
+      "19": {
+        "category": "growth",
+        "tag": "写作"
+      },
+      "20": {
+        "category": "growth",
+        "tag": "写作"
+      },
+      "21": {
+        "category": "custom",
+        "tag": "追剧"
+      },
+      "22": {
+        "category": "custom",
+        "tag": "追剧"
+      },
+      "23": {
+        "category": "custom",
+        "tag": "追剧"
+      }
+    }
+  },
+  "weekCheckin": {
+    "0": {
+      "7": "done",
+      "8": "done",
+      "9": "done",
+      "10": "done",
+      "11": "done",
+      "12": "done",
+      "13": "done",
+      "14": "done",
+      "15": "done",
+      "16": "done",
+      "17": "done",
+      "18": "done",
+      "19": "done",
+      "20": "done",
+      "21": "done",
+      "22": "done",
+      "23": "done"
+    },
+    "1": {
+      "7": "done",
+      "8": "done",
+      "9": "done",
+      "10": "done",
+      "11": "done",
+      "12": "done",
+      "13": "done",
+      "14": "done",
+      "16": "done",
+      "17": "done",
+      "18": "done",
+      "19": "done",
+      "20": "done",
+      "21": {
+        "status": "undone",
+        "reason": {
+          "category": "custom",
+          "tag": "购物"
+        }
+      },
+      "22": {
+        "status": "undone",
+        "reason": {
+          "category": "custom",
+          "tag": "购物"
+        }
+      },
+      "23": {
+        "status": "undone",
+        "reason": {
+          "category": "growth",
+          "tag": "写作"
+        }
+      }
+    },
+    "2": {
+      "7": "done",
+      "8": "done",
+      "9": "done",
+      "10": "done",
+      "11": "done",
+      "12": "done",
+      "13": "done",
+      "14": "done",
+      "15": "done",
+      "16": "done",
+      "17": "done",
+      "18": "done",
+      "19": "done",
+      "20": "done",
+      "21": "done",
+      "22": "done",
+      "23": "done"
+    },
+    "3": {
+      "7": "done",
+      "8": "done",
+      "9": "done",
+      "10": "done",
+      "11": "done",
+      "12": "done",
+      "13": "done",
+      "14": "done",
+      "15": "done",
+      "16": "done",
+      "17": "done",
+      "18": "done",
+      "19": "done",
+      "20": "done",
+      "21": "done",
+      "22": "done",
+      "23": "done"
+    },
+    "4": {
+      "7": "done",
+      "8": "done",
+      "9": "done",
+      "10": "done",
+      "11": "done",
+      "12": "done",
+      "13": "done",
+      "14": "done",
+      "15": "done",
+      "16": "done",
+      "17": "done",
+      "18": "done",
+      "19": "done",
+      "20": "done",
+      "21": "done",
+      "22": "done",
+      "23": "done"
+    },
+    "5": {
+      "7": "done",
+      "8": "done",
+      "9": "done",
+      "10": "done",
+      "11": "done",
+      "12": "done",
+      "13": "done",
+      "14": "done",
+      "15": "done",
+      "16": "done",
+      "17": "done",
+      "18": "done",
+      "19": "done",
+      "20": "done",
+      "21": "done"
+    },
+    "6": {
+      "7": "done",
+      "8": "done",
+      "9": "done",
+      "10": "done",
+      "11": "done",
+      "12": "done",
+      "13": "done",
+      "14": "done",
+      "15": "done",
+      "16": "done",
+      "17": "done",
+      "18": {
+        "status": "undone",
+        "reason": {
+          "category": "health",
+          "tag": "冥想"
+        }
+      }
+    }
+  },
+  "reviewNotes": {
+    "highlight": "AI探索制作了属于自己的App\n工作一切进展顺利",
+    "ng": "健康，睡眠时间比较少",
+    "thinking": "完全感觉时间不够用。期待假期。我目前对Ai编程特别感觉快乐和兴奋！开发自己的产品。"
+  },
+  "apiKey": "d93e1ae328584cfa834c1f15f7f1839f.op9Vsz5MwNEqATKe",
+  "apiProvider": "zhipu",
+  "currentDay": 6,
+  "currentEditCell": null,
+  "selectedCategory": "health",
+  "selectedTag": null,
+  "currentCheckinDay": 6,
+  "currentWeekKey": "2026-W06"
+}
