@@ -1,304 +1,4363 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>人生脚本 v0.8 精修版</title>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <style>
-        :root { --bg: #F9FBFB; --text: #333; --sub: #999; --accent: #6C5CE7; }
-        body {
-            font-family: -apple-system, sans-serif; background: var(--bg);
-            margin: 0; padding: 0; color: var(--text); -webkit-tap-highlight-color: transparent;
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
-        }
-        #intro-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #1a1a1a; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; transition: opacity 0.6s;
-        }
-        .start-btn { margin-top: 40px; padding: 12px 35px; border: 1px solid rgba(255,255,255,0.3); border-radius: 30px; background: rgba(255,255,255,0.1); color: white; font-size: 14px; letter-spacing: 2px; }
-        .header { padding: 44px 20px 15px; background: rgba(255,255,255,0.95); z-index: 50; border-bottom: 1px solid #eee; }
-        .header h1 { font-size: 20px; margin: 0; display: flex; align-items: center; justify-content: space-between; }
-        .page-container { flex: 1; position: relative; overflow: hidden; }
-        .page { display: none; height: 100%; overflow-y: auto; padding: 20px; padding-bottom: 180px; box-sizing: border-box; }
-        .page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
-        .time-row { display: flex; margin-bottom: 10px; align-items: center; }
-        .time-label { width: 40px; font-size: 12px; color: var(--sub); font-family: monospace; }
-        .block { flex: 1; height: 46px; background: white; border-radius: 10px; border: 1px dashed #ddd; display: flex; align-items: center; padding: 0 15px; font-size: 14px; color: var(--sub); transition: 0.2s; position: relative; }
-        .block.filled { border: none; color: #333; font-weight: 500; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .week-wrapper { overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
-        .week-table { display: grid; grid-template-columns: 40px repeat(7, 1fr); min-width: 100%; gap: 2px; }
-        .th { text-align: center; font-size: 10px; color: #999; padding: 5px 0; background: #f5f5f5; border-radius: 4px; }
-        .td-time { font-size: 10px; color: #ccc; text-align: center; line-height: 30px; }
-        .td-cell { height: 30px; background: #fff; border-radius: 4px; border: 1px solid #f0f0f0; font-size: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .highlight-col { border: 1px solid #333 !important; background: rgba(0,0,0,0.02); }
-        .section-title { font-size: 16px; font-weight: 600; margin: 25px 0 10px 0; display: flex; align-items: center; gap: 5px; }
-        .review-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-        .review-label { font-size: 12px; color: #999; margin-bottom: 5px; font-weight: bold; }
-        .review-input { width: 100%; border: none; background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 14px; box-sizing: border-box; resize: none; font-family: inherit; }
-        .ai-btn { background: linear-gradient(135deg, #6C5CE7, #a363d9); color: white; width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3); margin-top: 10px; }
-        .ai-result { display: none; background: #F4F4FC; border-left: 4px solid #6C5CE7; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
-        .nav-bar { height: 60px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; position: fixed; bottom: 0; width: 100%; z-index: 100; }
-        .nav-item { text-align: center; font-size: 10px; color: #ccc; flex: 1; }
-        .nav-item.active { color: #333; font-weight: bold; }
-        .nav-icon { display: block; font-size: 20px; margin-bottom: 2px; }
-        .drawer { position: fixed; bottom: 70px; left: 15px; right: 15px; background: white; border-radius: 20px; padding: 15px 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.15); z-index: 90; display: none; }
-        .role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-        .role-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: 0.5; transition: 0.2s; cursor: pointer;}
-        .role-btn.active { opacity: 1; transform: translateY(-3px); }
-        .dot { width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; display: none; justify-content: center; align-items: center; }
-        .modal { background: white; width: 80%; border-radius: 20px; padding: 20px; }
-        .color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 15px 0; }
-        .color-opt { width: 30px; height: 30px; border-radius: 50%; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="人生脚本">
+  <meta name="theme-color" content="#667eea">
+  <title>人生脚本 - Life Script</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+    
+    :root {
+      --bg: #FDFCF8;
+      --text: #2C2C2C;
+      --sub: #8B8B8B;
+      --border: #E5E3DC;
+      
+      /* 四象限颜色 */
+      --health: #A8D5BA;
+      --family: #FFD4A3;
+      --work: #A5C9E0;
+      --growth: #E0B3D9;
+      --custom: #D4D4D4;
+      
+      /* 状态颜色 */
+      --done: #95D7AE;
+      --undone: #F4A7A7;
+    }
 
-    </style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ========== 引导层 ========== */
+    #intro-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.8s ease;
+    }
+
+    #intro-layer.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .intro-container {
+      width: 100%;
+      max-width: 500px;
+      height: 100vh;
+      position: relative;
+      text-align: center;
+      padding: 80px 30px;
+      overflow: hidden;
+    }
+
+    .intro-slide {
+      animation: fadeIn 0.5s;
+    }
+
+    .intro-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      display: inline-block;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 0 4px;
+    }
+
+    .intro-dot.active {
+      width: 24px;
+      border-radius: 4px;
+      background: #667eea;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .start-btn {
+      padding: 14px 40px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 30px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 15px;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .start-btn:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+      transform: translateY(-2px);
+    }
+
+    /* ========== 顶部导航 ========== */
+    .header {
+      position: sticky;
+      top: 0;
+      padding: 20px;
+      background: rgba(253, 252, 248, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .user-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .user-name {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .user-name input {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      color: var(--text);
+      width: 150px;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .user-name input:focus {
+      outline: none;
+      border-bottom-color: var(--text);
+    }
+
+    .motto {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 13px;
+      color: var(--sub);
+      font-style: italic;
+      margin-top: 8px;
+    }
+
+    .week-info {
+      display: flex;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--sub);
+      flex-wrap: wrap;
+    }
+
+    .week-info span {
+      padding: 4px 10px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    /* ========== 页面容器 ========== */
+    .page-container {
+      min-height: calc(100vh - 200px);
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ========== 周计划页面 ========== */
+    .section-title {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 20px;
+      font-weight: 600;
+      margin: 30px 0 15px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quick-fill {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .category-selector {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .category-btn {
+      padding: 12px 8px;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      font-size: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .category-btn.active {
+      border-color: var(--text);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .tag-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .tag-btn {
+      padding: 8px 14px;
+      background: #f5f5f5;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tag-btn.active {
+      background: var(--text);
+      color: white;
+      border-color: var(--text);
+    }
+
+    .tag-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .batch-hint {
+      font-size: 12px;
+      color: var(--sub);
+      text-align: center;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+
+    /* 周视图表格 */
+    .week-table-wrapper {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 16px;
+      background: white;
+      padding: 15px;
+      border: 1px solid var(--border);
+    }
+
+    .week-table {
+      display: grid;
+      grid-template-columns: 50px repeat(7, 1fr);
+      gap: 4px;
+      min-width: 100%;
+    }
+
+    .week-header {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 10px 5px;
+      background: #f8f8f8;
+      border-radius: 8px;
+    }
+
+    .week-header.today {
+      background: var(--text);
+      color: white;
+    }
+
+    .time-label {
+      font-size: 10px;
+      color: var(--sub);
+      text-align: center;
+      padding: 8px 0;
+      font-family: monospace;
+    }
+
+    .time-cell {
+      min-height: 35px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .time-cell:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+
+    .time-cell.filled {
+      font-weight: 500;
+      border: none;
+    }
+
+    .time-cell.today-col {
+      border: 2px solid var(--text);
+    }
+
+    /* ========== 今日打卡 ========== */
+    .checkin-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+
+    .time-block {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 15px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .time-block:last-child {
+      border-bottom: none;
+    }
+
+    .time-block-time {
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 60px;
+      color: var(--sub);
+    }
+
+    .time-block-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .time-block-tag {
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      flex: 1;
+    }
+
+    .time-block-tag.empty {
+      background: #f5f5f5;
+      color: var(--sub);
+    }
+
+    .check-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .check-btn.done {
+      background: var(--done);
+      border-color: var(--done);
+    }
+
+    .check-btn.undone {
+      background: var(--undone);
+      border-color: var(--undone);
+    }
+
+    .check-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* ========== 周复盘 ========== */
+    .review-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .review-label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .review-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #fafafa;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .review-input:focus {
+      outline: none;
+      border-color: var(--text);
+      background: white;
+    }
+
+    /* 统计卡片 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .category-breakdown {
+      margin-top: 20px;
+    }
+
+    .category-bar {
+      margin-bottom: 15px;
+    }
+
+    .category-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .category-bar-track {
+      height: 24px;
+      background: #f5f5f5;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .category-bar-fill {
+      height: 100%;
+      transition: width 0.6s ease;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 11px;
+      color: white;
+      font-weight: 600;
+    }
+
+    /* AI 分析 */
+    .ai-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 20px;
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .ai-btn {
+      width: 100%;
+      padding: 15px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+
+    .ai-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+
+    .ai-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .ai-result {
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.8;
+      backdrop-filter: blur(10px);
+      display: none;
+      white-space: pre-line; /* 保留换行符 */
+    }
+
+    .ai-result.show {
+      display: block;
+      animation: slideDown 0.4s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ========== 工具页面 ========== */
+    .tool-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .tool-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .category-config {
+      margin-bottom: 20px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #fafafa;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .color-picker {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+    }
+
+    .category-name-input {
+      flex: 1;
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tag-item {
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag-remove {
+      cursor: pointer;
+      color: var(--sub);
+      font-weight: 600;
+    }
+
+    .tag-remove:hover {
+      color: var(--text);
+    }
+
+    .add-tag-input {
+      padding: 6px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      font-size: 12px;
+      width: 120px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #f5f5f5;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* ========== 底部导航 ========== */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      padding: 10px;
+    }
+
+    .nav-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .nav-label {
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .nav-item:hover {
+      transform: translateY(-2px);
+    }
+
+    /* ========== 模态框 ========== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-overlay.show {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .modal-field {
+      margin-bottom: 15px;
+    }
+
+    .modal-label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .modal-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+    }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .category-selector {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* ========== 工具提示 ========== */
+    .hint {
+      font-size: 12px;
+      color: var(--sub);
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      margin: 10px 0;
+      border-left: 3px solid var(--text);
+    }
+
+    /* 日期选择器 */
+    .date-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+
+    .date-btn {
+      min-width: 80px;
+      padding: 10px;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      background: white;
+      transition: all 0.2s;
+    }
+
+    .date-btn.active {
+      background: var(--text);
+      color: white;
+      border-color: var(--text);
+    }
+
+    .date-btn-day {
+      font-size: 11px;
+      color: var(--sub);
+      margin-bottom: 3px;
+    }
+
+    .date-btn.active .date-btn-day {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .date-btn-date {
+      font-size: 14px;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
-
-    <div id="intro-layer">
-        <div style="font-size: 40px; margin-bottom: 20px;">🎬</div>
-        <div style="font-size: 20px; letter-spacing: 2px;">LIFE SCRIPT</div>
-        <div style="font-size: 12px; opacity: 0.5; margin-top: 5px;">3...2...1... Action!</div>
-        <button class="start-btn" onclick="startGame()">进入片场</button>
-    </div>
-
-    <div class="header">
-        <h1>
-            <span id="pageTitle">今日剧本</span>
-            <span style="font-size:12px; font-weight:normal; background:#eee; padding:4px 8px; border-radius:10px;">🗓️ 1月10日 周六</span>
-        </h1>
-        <div style="margin-top: 10px; display: flex; gap: 8px; font-size: 12px;">
-            <button onclick="exportAsImage()" style="flex:1; padding:6px 12px; border:none; border-radius:8px; background:#6C5CE7; color:white; cursor:pointer;">📸 导出图片</button>
+  <!-- 引导层 -->
+  <div id="intro-layer">
+    <div class="intro-container" id="introContainer">
+      <!-- 第1页:欢迎页 -->
+      <div class="intro-slide" data-slide="0">
+        <div style="font-size:80px; margin-bottom:30px;">🎬</div>
+        <h2 style="font-size:32px; font-weight:700; margin-bottom:15px; font-family: 'Noto Serif SC', serif;">人生脚本</h2>
+        <p style="font-size:16px; color:#666; margin-bottom:40px;">每一天都要精彩地活<br>你是你人生的导演</p>
+        <div style="font-size:18px; font-weight:600; margin-bottom:20px; color:#667eea;">这里我们将时间分成四类</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; max-width:300px; margin:0 auto;">
+          <div style="background:#A8D5BA; padding:20px; border-radius:12px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:8px;">💪</div>
+            <div style="font-size:14px;">健康习惯</div>
+          </div>
+          <div style="background:#FFD4A3; padding:20px; border-radius:12px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:8px;">🏠</div>
+            <div style="font-size:14px;">家庭时间</div>
+          </div>
+          <div style="background:#A5C9E0; padding:20px; border-radius:12px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:8px;">💼</div>
+            <div style="font-size:14px;">工作时间</div>
+          </div>
+          <div style="background:#E0B3D9; padding:20px; border-radius:12px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:8px;">📚</div>
+            <div style="font-size:14px;">自我成长</div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <div class="page-container">
+      <!-- 第2页:理念 -->
+      <div class="intro-slide" data-slide="1" style="display:none;">
+        <div style="font-size:80px; margin-bottom:30px;">🎭</div>
+        <h2 style="font-size:28px; font-weight:700; margin-bottom:20px;">演员+导演的双重视角</h2>
+        <div style="text-align:left; max-width:320px; margin:0 auto; font-size:15px; line-height:1.9; color:#555;">
+          <p style="margin-bottom:20px;"><strong style="color:#667eea; font-size:16px;">80%固定,20%灵活</strong></p>
+          <p>· 固定80%的日常动作,建立秩序感</p>
+          <p>· 为长期目标留出时间</p>
+          <p>· 培养终身习惯</p>
+          <p>· 提升应对混乱的能力</p>
+        </div>
+        <div style="margin-top:30px; padding:15px; background:#E8F5E9; border-radius:12px; font-size:13px; color:#4CAF50; text-align:left; max-width:320px; margin:30px auto 0;">
+          <div style="font-weight:600; margin-bottom:8px;">💡 知行合一率小贴士</div>
+          <div style="font-size:12px; line-height:1.6;">
+            · 理想区间是 75-85%,不是100%<br>
+            · 适度的未完成说明你在挑战自己<br>
+            · 过高可能计划太保守,过低需要调整
+          </div>
+        </div>
+        <div style="margin-top:15px; padding:20px; background:#f5f5f5; border-radius:12px; font-size:14px; color:#999;">
+          周计划 → 日打卡 → 周复盘
+        </div>
+      </div>
+
+      <!-- 第3页:使用方法 -->
+      <div class="intro-slide" data-slide="2" style="display:none;">
+        <div style="font-size:80px; margin-bottom:30px;">📝</div>
+        <h2 style="font-size:28px; font-weight:700; margin-bottom:30px;">三步开始你的人生剧本</h2>
+        <div style="text-align:left; max-width:320px; margin:0 auto;">
+          <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="width:40px; height:40px; background:#667eea; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; flex-shrink:0;">1</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:5px;">周一制定剧本</div>
+              <div style="font-size:13px; color:#666;">在"周计划"页排班,固定80%的时间</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="width:40px; height:40px; background:#667eea; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; flex-shrink:0;">2</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:5px;">每天执行打卡</div>
+              <div style="font-size:13px; color:#666;">在"今日打卡"页记录,完成✓,未完成✗</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:15px;">
+            <div style="width:40px; height:40px; background:#667eea; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; flex-shrink:0;">3</div>
+            <div>
+              <div style="font-weight:600; margin-bottom:5px;">周日导演复盘</div>
+              <div style="font-size:13px; color:#666;">在"周复盘"页分析,知行合一率+AI洞察</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 第4页:开始 -->
+      <div class="intro-slide" data-slide="3" style="display:none;">
+        <div style="font-size:80px; margin-bottom:30px;">🚀</div>
+        <h2 style="font-size:28px; font-weight:700; margin-bottom:20px;">准备好了吗?</h2>
+        <p style="font-size:16px; color:#666; margin-bottom:40px;">让我们开启你的人生剧本之旅<br>从输入你的名字开始</p>
+        <button class="start-btn" onclick="startApp()">进入片场</button>
+      </div>
+
+      <!-- 导航点和按钮 -->
+      <div style="position:absolute; bottom:100px; left:0; right:0; display:flex; justify-content:center; align-items:center; gap:10px;">
+        <span class="intro-dot active" data-index="0" onclick="goToSlide(0)"></span>
+        <span class="intro-dot" data-index="1" onclick="goToSlide(1)"></span>
+        <span class="intro-dot" data-index="2" onclick="goToSlide(2)"></span>
+        <span class="intro-dot" data-index="3" onclick="goToSlide(3)"></span>
+      </div>
+
+      <button onclick="nextSlide()" style="position:absolute; bottom:30px; right:30px; background:#667eea; color:white; border:none; padding:12px 30px; border-radius:25px; font-size:14px; cursor:pointer; font-weight:600; box-shadow:0 4px 12px rgba(102,126,234,0.3);" id="nextBtn">下一页</button>
+      <button onclick="startApp()" style="position:absolute; top:30px; right:30px; background:transparent; color:#999; border:none; padding:8px 16px; font-size:14px; cursor:pointer;">跳过</button>
+    </div>
+  </div>
+
+  <!-- 顶部信息 -->
+  <div class="header">
+    <div class="user-info">
+      <div class="user-name">
+        人生脚本 - <span id="userNameDisplay" onclick="editUserName()" style="cursor:pointer; border-bottom:1px dashed transparent;">导演</span>
+      </div>
+    </div>
+    <div class="motto">每一天都要精彩地活。你是你人生的导演。</div>
+    <div class="week-info">
+      <span id="yearInfo">2025年</span>
+      <span id="weekNum">第6周</span>
+      <span id="dateRange">2月3日 - 2月9日</span>
+    </div>
+  </div>
+
+  <!-- 页面容器 -->
+  <div class="page-container">
+    <!-- 周计划页 -->
+    <div id="page-plan" class="page active">
+      <div class="section-title">📋 本周剧本</div>
+      
+      <!-- 快捷填充工具 -->
+      <div class="quick-fill">
+        <div style="font-weight: 600; margin-bottom: 15px;">⚡ 快捷排班</div>
         
-        <div id="page-daily" class="page active">
-            <div id="daily-list"></div>
+        <div class="category-selector" id="categorySelector">
+          <!-- 动态生成 -->
         </div>
 
-        <div id="page-weekly" class="page">
-            <div class="week-wrapper">
-                <div class="week-table" id="week-grid"></div>
-            </div>
-
-            <div class="section-title">📝 导演周复盘</div>
-            <div class="review-card">
-                <div class="review-label">🌟 高光时刻 (Highlight)</div>
-                <textarea class="review-input" rows="2" placeholder="本周最满意的表现..."></textarea>
-            </div>
-            <div class="review-card">
-                <div class="review-label">💣 穿帮镜头 (NG)</div>
-                <textarea class="review-input" rows="2" placeholder="遗憾或未完成的事..."></textarea>
-            </div>
-            <div class="review-card">
-                <div class="review-label">💡 导演思考 (Thinking)</div>
-                <textarea class="review-input" rows="2" placeholder="下周剧本优化方案..."></textarea>
-            </div>
-
-            <div class="section-title">🧠 AI 洞察</div>
-            <button class="ai-btn" onclick="callAI()">
-                <span id="ai-btn-text">✨ 呼叫 DeepSeek 分析数据</span>
-            </button>
-            <div id="ai-output" class="ai-result"></div>
+        <div class="tag-selector" id="tagSelector">
+          <!-- 动态生成 -->
         </div>
 
+        <div class="batch-hint">
+          💡 选择类别和标签后,点击下方格子即可快速填充
+        </div>
+      </div>
+
+      <!-- 周视图表格 -->
+      <div class="week-table-wrapper">
+        <div class="week-table" id="weekTable">
+          <!-- 动态生成 -->
+        </div>
+      </div>
     </div>
 
-    <div class="drawer" id="drawer">
-        <div class="role-grid" id="roleContainer"></div>
+    <!-- 今日打卡页 -->
+    <div id="page-checkin" class="page">
+      <div class="section-title">✅ 今日打卡</div>
+      
+      <!-- 日期选择 -->
+      <div class="date-selector" id="dateSelector">
+        <!-- 动态生成 -->
+      </div>
+
+      <div class="hint">
+        💡 点击 ✓ 表示完成,✗ 表示未完成(需说明原因)
+      </div>
+
+      <div class="checkin-card" id="checkinList">
+        <!-- 动态生成 -->
+      </div>
     </div>
 
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="switchPage('daily', this)">
-            <span class="nav-icon">📝</span>今日
+    <!-- 周复盘页 -->
+    <div id="page-review" class="page">
+      <!-- 视图切换 -->
+      <div style="display:flex; gap:10px; margin-bottom:20px; background:white; padding:10px; border-radius:12px;">
+        <button class="btn btn-secondary" id="viewWeekBtn" onclick="switchReviewView('week')" style="flex:1">本周</button>
+        <button class="btn btn-secondary" id="viewMonthBtn" onclick="switchReviewView('month')" style="flex:1">本月</button>
+      </div>
+
+      <!-- 周视图 -->
+      <div id="weekView">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <div class="section-title" style="margin:0;">📊 周度审视</div>
+          <button class="btn btn-secondary" onclick="shareWeekReviewPage()" style="padding:8px 20px; font-size:14px;">📤 分享此页</button>
         </div>
-        <div class="nav-item" onclick="switchPage('weekly', this)">
-            <span class="nav-icon">📊</span>周复盘
+
+      <!-- 完成统计 -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statCompletion">0%</div>
+          <div class="stat-label">知行合一率</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statTotal">0/119</div>
+          <div class="stat-label">完成时段</div>
+        </div>
+      </div>
+
+      <!-- 时间分布 -->
+      <div class="review-section">
+        <div class="review-label">⏰ 时间分布</div>
+        <div class="category-breakdown" id="categoryBreakdown">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <!-- 周复盘表格 -->
+      <div class="week-table-wrapper">
+        <div style="font-weight: 600; margin-bottom: 10px;">本周执行情况</div>
+        <div class="week-table" id="reviewWeekTable">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <!-- 导演复盘 -->
+      <div class="review-section">
+        <div class="review-label">🌟 高光时刻 (Highlight)</div>
+        <textarea class="review-input" id="reviewHighlight" placeholder="本周最满意的表现..."></textarea>
+      </div>
+
+      <div class="review-section">
+        <div class="review-label">💣 穿帮镜头 (NG)</div>
+        <textarea class="review-input" id="reviewNG" placeholder="遗憾或未完成的事..."></textarea>
+      </div>
+
+      <div class="review-section">
+        <div class="review-label">💡 导演思考 (Thinking)</div>
+        <textarea class="review-input" id="reviewThinking" placeholder="下周剧本优化方案..."></textarea>
+      </div>
+
+      <!-- AI 分析 -->
+      <div class="ai-section">
+        <div style="font-weight: 600; margin-bottom: 15px;">🧠 AI 深度洞察</div>
+        <button class="ai-btn" id="aiBtn" onclick="analyzeWithAI()">
+          <span id="aiBtnText">✨ AI 分析本周数据</span>
+        </button>
+        <div class="ai-result" id="aiResult"></div>
+      </div>
+
+      <!-- 分享按钮 -->
+      <div class="review-section">
+        <div style="font-weight: 600; margin-bottom: 15px;">📤 分享选项</div>
+        
+        <!-- 快捷分享 -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px; color:#999; margin-bottom:10px;">快捷分享</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <button class="btn btn-secondary" onclick="shareWeekPlan()">📋 周计划</button>
+            <button class="btn btn-secondary" onclick="shareWeekReview()">✅ 执行情况</button>
+            <button class="btn btn-secondary" onclick="shareAIInsight()">🧠 AI洞察</button>
+            <button class="btn btn-secondary" onclick="shareStatCard()">📊 数据卡片</button>
+          </div>
+        </div>
+
+        <!-- 组合分享 -->
+        <div style="background:#f9f9f9; padding:15px; border-radius:12px;">
+          <div style="font-size:13px; color:#999; margin-bottom:10px;">✨ 组合分享 (多选)</div>
+          <div style="margin-bottom:12px;">
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer;">
+              <input type="checkbox" id="shareOpt1" checked style="width:18px; height:18px;">
+              <span style="font-size:14px;">周度审视(知行合一率)</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer;">
+              <input type="checkbox" id="shareOpt2" checked style="width:18px; height:18px;">
+              <span style="font-size:14px;">时间分布</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer;">
+              <input type="checkbox" id="shareOpt3" style="width:18px; height:18px;">
+              <span style="font-size:14px;">复盘笔记</span>
+            </label>
+          </div>
+          <button class="btn btn-primary" onclick="shareCustomCard()" style="width:100%;">🎬 生成自定义卡片</button>
+        </div>
+      </div>
+      </div><!-- 结束weekView -->
+
+      <!-- 月视图 -->
+      <div id="monthView" style="display:none;">
+        <div class="section-title">📅 月度总览</div>
+
+        <!-- 月度统计 -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="monthCompletion">0%</div>
+            <div class="stat-label">月度知行合一率</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="monthTotal">0/0</div>
+            <div class="stat-label">完成/计划</div>
+          </div>
+        </div>
+
+        <!-- 周度趋势 -->
+        <div class="review-section">
+          <div class="review-label">📈 周度趋势</div>
+          <div id="weekTrend" style="padding:20px 0;">
+            <!-- 动态生成折线图 -->
+          </div>
+        </div>
+
+        <!-- 月度时间分布饼图 -->
+        <div class="review-section">
+          <div class="review-label">🥧 时间分布</div>
+          <div style="display:flex; justify-content:center; padding:20px;">
+            <canvas id="monthPieChart" width="300" height="300"></canvas>
+          </div>
+          <div id="monthCategoryList"></div>
+        </div>
+
+        <!-- 月度复盘 -->
+        <div class="review-section">
+          <div class="review-label">🌟 本月最大收获</div>
+          <textarea class="review-input" id="monthAchievement" rows="3" placeholder="这个月最满意的成就..."></textarea>
+        </div>
+
+        <div class="review-section">
+          <div class="review-label">⚠️ 本月最大挑战</div>
+          <textarea class="review-input" id="monthChallenge" rows="3" placeholder="遇到的困难和挑战..."></textarea>
+        </div>
+
+        <div class="review-section">
+          <div class="review-label">🎯 下月三大目标</div>
+          <textarea class="review-input" id="monthGoals" rows="3" placeholder="1. ...\n2. ...\n3. ..."></textarea>
+        </div>
+
+        <!-- 月度AI分析 -->
+        <div class="ai-section">
+          <div style="font-weight: 600; margin-bottom: 15px;">🧠 月度AI洞察</div>
+          <button class="ai-btn" id="monthAiBtn" onclick="analyzeMonth()">
+            <span id="monthAiBtnText">✨ AI 分析本月数据</span>
+          </button>
+          <div class="ai-result" id="monthAIResult"></div>
+        </div>
+
+        <!-- 月度分享 -->
+        <div class="review-section">
+          <div style="font-weight: 600; margin-bottom: 15px;">📤 分享选项</div>
+          
+          <!-- 快捷分享 -->
+          <div style="margin-bottom:15px; font-size:13px; color:#999;">快捷分享</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+            <button class="btn btn-secondary" onclick="shareMonthReviewPage()">📊 月度审视</button>
+            <button class="btn btn-secondary" onclick="shareMonthAIInsight()">🧠 AI洞察</button>
+            <button class="btn btn-secondary" onclick="shareMonthTrendCard()">📈 趋势图</button>
+            <button class="btn btn-secondary" onclick="shareMonthSummaryCard()">📋 数据总结</button>
+          </div>
+        </div>
+      </div><!-- 结束monthView -->
     </div>
 
-    <div class="modal-overlay" id="addModal">
-        <div class="modal">
-            <h3>新角色试镜</h3>
-            <input id="newRoleName" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;" placeholder="角色名称...">
-            <div class="color-grid" id="colorGrid"></div>
-            <div style="display:flex; gap:10px">
-                <button onclick="closeModal()" style="flex:1; padding:10px; border:none; background:#eee; border-radius:8px;">取消</button>
-                <button onclick="saveRole()" style="flex:1; padding:10px; border:none; background:#333; color:white; border-radius:8px;">确认</button>
+    <!-- 工具页 -->
+    <div id="page-tools" class="page">
+      <div class="section-title">⚙️ 设置</div>
+
+      <!-- 分类配置 -->
+      <div class="tool-section">
+        <div class="tool-title">🎨 自定义分类</div>
+        <div class="hint">
+          💡 参考示例:健康习惯、家庭时间、工作时间、自我成长、休闲娱乐
+        </div>
+        <div id="categoryConfig">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <!-- 数据管理 -->
+      <div class="tool-section">
+        <div class="tool-title">💾 数据管理</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="exportData()">📤 导出数据</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+      </div>
+
+      <!-- API 配置 -->
+      <div class="tool-section">
+        <div class="tool-title">🔌 AI 配置</div>
+        <div class="modal-field">
+          <label class="modal-label">选择AI平台</label>
+          <select class="modal-select" id="apiProvider" onchange="updateAPIProvider()">
+            <option value="deepseek">DeepSeek</option>
+            <option value="zhipu">智谱清言 (GLM-4)</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" id="apiKeyLabel">DeepSeek API Key</label>
+          <input type="text" class="modal-input" id="apiKey" placeholder="sk-...">
+        </div>
+        <button class="btn btn-primary" onclick="saveAPIKey()">保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="nav-bar">
+    <div class="nav-item active" onclick="switchPage('plan')">
+      <span class="nav-icon">📋</span>
+      <div class="nav-label">剧本安排</div>
+    </div>
+    <div class="nav-item" onclick="switchPage('checkin')">
+      <span class="nav-icon">✅</span>
+      <div class="nav-label">今日打卡</div>
+    </div>
+    <div class="nav-item" onclick="switchPage('review')">
+      <span class="nav-icon">📊</span>
+      <div class="nav-label">导演总结</div>
+    </div>
+    <div class="nav-item" onclick="switchPage('tools')">
+      <span class="nav-icon">⚙️</span>
+      <div class="nav-label">工具</div>
+    </div>
+  </div>
+
+  <!-- 编辑任务模态框 -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-title">编辑时段</div>
+      <div class="modal-field">
+        <label class="modal-label">选择分类</label>
+        <select class="modal-select" id="modalCategory" onchange="updateModalTags()">
+          <!-- 动态生成 -->
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">选择标签</label>
+        <select class="modal-select" id="modalTag">
+          <!-- 动态生成 -->
+        </select>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveTask()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 打卡说明模态框 -->
+  <div class="modal-overlay" id="reasonModal">
+    <div class="modal">
+      <div class="modal-title">未完成原因</div>
+      <div class="modal-field">
+        <label class="modal-label">实际做了什么?</label>
+        <select class="modal-select" id="reasonCategory">
+          <!-- 动态生成 -->
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">具体标签</label>
+        <select class="modal-select" id="reasonTag">
+          <!-- 动态生成 -->
+        </select>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="closeReasonModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveReason()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分享卡片模态框 -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-title">本周剧本 · 分享卡片</div>
+      <div id="shareCard" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 40px 30px; color: white; position: relative; overflow: hidden;">
+        <!-- 装饰性圆点 -->
+        <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+        
+        <div style="position: relative; z-index: 1;">
+          <div style="font-family: 'Noto Serif SC', serif; font-size: 28px; font-weight: 700; margin-bottom: 20px;">
+            <span id="shareUserName"></span> 的人生剧本
+          </div>
+          
+          <div style="font-size: 14px; opacity: 0.9; margin-bottom: 30px;" id="shareWeekInfo"></div>
+          
+          <div style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 16px; padding: 25px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+              <div style="text-align: center;">
+                <div style="font-size: 36px; font-weight: 700;" id="shareCompletionRate"></div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">知行合一率</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 36px; font-weight: 700;" id="shareCompleted"></div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">完成时段</div>
+              </div>
             </div>
+            
+            <div id="shareDistribution" style="font-size: 13px; line-height: 1.8;">
+              <!-- 动态生成时间分布 -->
+            </div>
+          </div>
+          
+          <div id="shareInsight" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 12px; padding: 20px; font-size: 13px; line-height: 1.8; font-style: italic; display: none;">
+            <!-- AI洞察摘要 -->
+          </div>
+          
+          <div style="text-align: center; font-size: 11px; opacity: 0.6; margin-top: 30px;">
+            人生脚本 · 每一天都要精彩地活
+          </div>
         </div>
+      </div>
+      
+      <div class="btn-group" style="margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="closeShareModal()">关闭</button>
+        <button class="btn btn-primary" onclick="downloadShareImage()">保存图片</button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // 应用数据模型（可持久化）
-        const weekData = Array(7).fill(null).map(() => ({}));
-        const todayIndex = 5;
-        let roles = [
-            { name:'打工人', color:'#AECBFA', icon:'💻' },
-            { name:'妈妈', color:'#FDE293', icon:'👶' },
-            { name:'爱自己', color:'#CCF0DF', icon:'🧘‍♀️' }
-        ];
-        let curRoleIdx = 0;
-        let selColor = '#FFADAD';
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    // ========== 数据模型 ==========
+    const DEFAULT_CATEGORIES = {
+      health: {
+        name: '健康习惯',
+        color: '#A8D5BA',
+        tags: ['冥想', '运动', '瑜伽', '睡眠', '营养餐']
+      },
+      family: {
+        name: '家庭时间',
+        color: '#FFD4A3',
+        tags: ['陪孩子', '陪父母', '家务', '亲子活动']
+      },
+      work: {
+        name: '工作时间',
+        color: '#A5C9E0',
+        tags: ['加班狗', '会议', '项目', '学习']
+      },
+      growth: {
+        name: '自我成长',
+        color: '#E0B3D9',
+        tags: ['写作', '阅读', '思考', '学习']
+      },
+      custom: {
+        name: '休闲娱乐',
+        color: '#D4D4D4',
+        tags: ['追剧', '游戏', '社交', '购物']
+      }
+    };
 
-        async function init() {
-            const dContainer = document.getElementById('daily-list');
-            for (let h = 7; h <= 23; h++) {
-                dContainer.innerHTML += `\n                    <div class="time-row">\n                        <div class="time-label">${h}:00</div>\n                        <div class="block" id="d-${h}" onclick="paintDaily(${h})">+</div>\n                    </div>`;
+    // 应用状态
+    let appState = {
+      userName: '周小白',
+      categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)),
+      
+      // 新数据结构:按周存储,key为"2026-W06"格式
+      weeklyData: {}, // { "2026-W06": { plan: {}, checkin: {}, notes: {} } }
+      
+      // 兼容旧版本(逐步迁移)
+      weekPlan: {}, 
+      weekCheckin: {},
+      reviewNotes: {
+        highlight: '',
+        ng: '',
+        thinking: ''
+      },
+      
+      apiKey: 'f1c52d6ab71e48e9a55c3ddd6ab53fa8.Og0BXHTv64fHpDVo',
+      apiProvider: 'zhipu',
+      currentDay: 6,
+      currentEditCell: null,
+      selectedCategory: 'health',
+      selectedTag: null,
+      currentCheckinDay: 6,
+      currentWeekKey: '' // 当前周标识,如"2026-W06"
+    };
+
+    // ========== 知行合一率评级系统 ==========
+    function getRatingInfo(rate) {
+      if (rate >= 85) {
+        return {
+          level: '卓越',
+          icon: '🌟',
+          color: '#FFD700',
+          message: '惊人的自律!不过也要给自己留点弹性空间哦',
+          inIdealRange: false,
+          encouragement: '你的执行力超群!但记住,适度的未完成(10-20%)反而说明你在挑战自己'
+        };
+      } else if (rate >= 75) {
+        return {
+          level: '优秀',
+          icon: '🏆',
+          color: '#4CAF50',
+          message: '完美的平衡!这正是健康的知行合一率',
+          inIdealRange: true,
+          encouragement: '你在理想区间内!计划既有挑战性又切实可行,继续保持!'
+        };
+      } else if (rate >= 65) {
+        return {
+          level: '良好',
+          icon: '👍',
+          color: '#2196F3',
+          message: '不错的开始!稳定后可以慢慢提升',
+          inIdealRange: false,
+          encouragement: '稳定在这个水平,然后每周提升2-3%,循序渐进最有效'
+        };
+      } else if (rate >= 55) {
+        return {
+          level: '及格',
+          icon: '⚠️',
+          color: '#FF9800',
+          message: '还有进步空间',
+          inIdealRange: false,
+          encouragement: '试着从最容易的3个时段开始稳定?小承诺更容易建立信任'
+        };
+      } else {
+        return {
+          level: '需改进',
+          icon: '🔴',
+          color: '#F44336',
+          message: '计划可能太多了',
+          inIdealRange: false,
+          encouragement: '下周试试减少50%的计划量,从少量稳定的承诺开始'
+        };
+      }
+    }
+
+    // ========== 初始化 ==========
+    function init() {
+      // 检查是否首次使用
+      checkFirstUse();
+      
+      loadData();
+      updateWeekInfo();
+      renderCategorySelector();
+      renderWeekTable();
+      renderDateSelector();
+      renderCheckinList();
+      renderCategoryConfig();
+      
+      // 显示用户名
+      document.getElementById('userNameDisplay').textContent = appState.userName;
+
+      // 绑定复盘输入
+      ['highlight', 'NG', 'thinking'].forEach(key => {
+        const el = document.getElementById(`review${key.charAt(0).toUpperCase() + key.slice(1)}`);
+        if (!el) {
+          console.error(`找不到元素: review${key}`);
+          return;
+        }
+        
+        const stateKey = key === 'NG' ? 'ng' : key; // NG映射为ng
+        el.value = appState.reviewNotes[stateKey] || '';
+        
+        // 三重保障:input(实时), change, blur
+        const saveNote = (e) => {
+          appState.reviewNotes[stateKey] = e.target.value;
+          console.log(`✅ 保存复盘笔记 ${stateKey}:`, e.target.value.substring(0, 20) + '...'); // 调试日志
+          saveData();
+        };
+        
+        el.addEventListener('input', saveNote); // 实时保存
+        el.addEventListener('change', saveNote);
+        el.addEventListener('blur', saveNote);
+      });
+
+      // 绑定API配置
+      const apiKeyInput = document.getElementById('apiKey');
+      apiKeyInput.value = appState.apiKey || '';
+      
+      const apiProvider = document.getElementById('apiProvider');
+      apiProvider.value = appState.apiProvider || 'zhipu';
+      updateAPIProvider();
+    }
+
+    function editUserName() {
+      const newName = prompt('请输入您的姓名:', appState.userName);
+      if (newName && newName.trim()) {
+        appState.userName = newName.trim();
+        document.getElementById('userNameDisplay').textContent = appState.userName;
+        saveData();
+      }
+    }
+
+    // ========== 周信息更新 ==========
+    function updateWeekInfo() {
+      // 获取北京时间 (UTC+8)
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const beijingTime = new Date(utc + (3600000 * 8));
+      
+      const year = beijingTime.getFullYear();
+      const weekNum = getWeekNumber(beijingTime);
+      
+      // 生成周标识
+      appState.currentWeekKey = `${year}-W${String(weekNum).padStart(2, '0')}`;
+      
+      // 获取本周一和周日
+      const dayOfWeek = beijingTime.getDay(); // 0=周日, 6=周六
+      appState.currentDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 转换为周一=0
+      appState.currentCheckinDay = appState.currentDay;
+      
+      const monday = new Date(beijingTime);
+      monday.setDate(beijingTime.getDate() - appState.currentDay);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      document.getElementById('yearInfo').textContent = `${year}年`;
+      document.getElementById('weekNum').textContent = `第${weekNum}周`;
+      document.getElementById('dateRange').textContent = 
+        `${monday.getMonth() + 1}月${monday.getDate()}日 - ${sunday.getMonth() + 1}月${sunday.getDate()}日`;
+      
+      // 初始化本周数据
+      initCurrentWeekData();
+    }
+    
+    // 初始化当前周数据
+    function initCurrentWeekData() {
+      const weekKey = appState.currentWeekKey;
+      
+      // 如果weeklyData中没有本周数据,尝试从旧格式迁移
+      if (!appState.weeklyData[weekKey]) {
+        appState.weeklyData[weekKey] = {
+          plan: appState.weekPlan || {},
+          checkin: appState.weekCheckin || {},
+          notes: {
+            highlight: appState.reviewNotes?.highlight || '',
+            ng: appState.reviewNotes?.ng || '',
+            thinking: appState.reviewNotes?.thinking || ''
+          }
+        };
+      }
+      
+      // 同步到旧格式(向后兼容)
+      appState.weekPlan = appState.weeklyData[weekKey].plan || {};
+      appState.weekCheckin = appState.weeklyData[weekKey].checkin || {};
+      
+      // 重要:深度复制notes,避免引用问题
+      const savedNotes = appState.weeklyData[weekKey].notes || {};
+      appState.reviewNotes = {
+        highlight: savedNotes.highlight || '',
+        ng: savedNotes.ng || '',
+        thinking: savedNotes.thinking || ''
+      };
+    }
+    
+    // 保存当前周数据
+    function saveCurrentWeekData() {
+      const weekKey = appState.currentWeekKey;
+      
+      // 确保weeklyData中有本周数据
+      if (!appState.weeklyData[weekKey]) {
+        appState.weeklyData[weekKey] = {};
+      }
+      
+      // 保存计划和打卡数据
+      appState.weeklyData[weekKey].plan = appState.weekPlan;
+      appState.weeklyData[weekKey].checkin = appState.weekCheckin;
+      
+      // 重点:确保notes对象完整保存
+      appState.weeklyData[weekKey].notes = {
+        highlight: appState.reviewNotes.highlight || '',
+        ng: appState.reviewNotes.ng || '',
+        thinking: appState.reviewNotes.thinking || ''
+      };
+      
+      console.log('保存本周数据:', weekKey, appState.weeklyData[weekKey].notes); // 调试日志
+    }
+
+    function getWeekNumber(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+      return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    }
+
+    // ========== 分类选择器渲染 ==========
+    function renderCategorySelector() {
+      const container = document.getElementById('categorySelector');
+      container.innerHTML = '';
+      
+      Object.keys(appState.categories).forEach(key => {
+        const cat = appState.categories[key];
+        const btn = document.createElement('div');
+        btn.className = 'category-btn';
+        if (appState.selectedCategory === key) btn.classList.add('active');
+        btn.style.background = cat.color;
+        btn.textContent = cat.name;
+        btn.onclick = () => selectCategory(key);
+        container.appendChild(btn);
+      });
+
+      renderTagSelector();
+    }
+
+    function renderTagSelector() {
+      const container = document.getElementById('tagSelector');
+      container.innerHTML = '';
+      
+      const cat = appState.categories[appState.selectedCategory];
+      if (!cat) return;
+
+      cat.tags.forEach(tag => {
+        const btn = document.createElement('div');
+        btn.className = 'tag-btn';
+        if (appState.selectedTag === tag) btn.classList.add('active');
+        btn.textContent = tag;
+        btn.onclick = () => selectTag(tag);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectCategory(key) {
+      appState.selectedCategory = key;
+      appState.selectedTag = null;
+      renderCategorySelector();
+    }
+
+    function selectTag(tag) {
+      appState.selectedTag = tag;
+      renderTagSelector();
+    }
+
+    // ========== 周视图表格 ==========
+    function renderWeekTable() {
+      const container = document.getElementById('weekTable');
+      container.innerHTML = '';
+
+      // 表头
+      const headers = ['', '一', '二', '三', '四', '五', '六', '日'];
+      headers.forEach((h, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'week-header';
+        if (i > 0 && i - 1 === appState.currentDay) cell.classList.add('today');
+        cell.textContent = h;
+        container.appendChild(cell);
+      });
+
+      // 时间行
+      for (let hour = 7; hour <= 23; hour++) {
+        // 时间标签
+        const timeLabel = document.createElement('div');
+        timeLabel.className = 'time-label';
+        timeLabel.textContent = `${hour}:00`;
+        container.appendChild(timeLabel);
+
+        // 每天的格子
+        for (let day = 0; day < 7; day++) {
+          const cell = document.createElement('div');
+          cell.className = 'time-cell';
+          if (day === appState.currentDay) cell.classList.add('today-col');
+
+          const task = appState.weekPlan[day]?.[hour];
+          if (task) {
+            const cat = appState.categories[task.category];
+            cell.style.background = cat.color;
+            cell.textContent = task.tag;
+            cell.classList.add('filled');
+          }
+
+          cell.onclick = () => editCell(day, hour);
+          container.appendChild(cell);
+        }
+      }
+    }
+
+    function editCell(day, hour) {
+      // 如果已选择标签,直接填充
+      if (appState.selectedTag && appState.selectedCategory) {
+        if (!appState.weekPlan[day]) appState.weekPlan[day] = {};
+        appState.weekPlan[day][hour] = {
+          category: appState.selectedCategory,
+          tag: appState.selectedTag
+        };
+        saveData();
+        renderWeekTable();
+        return;
+      }
+
+      // 否则打开编辑框
+      appState.currentEditCell = { day, hour };
+      const task = appState.weekPlan[day]?.[hour];
+      
+      // 填充模态框
+      const categorySelect = document.getElementById('modalCategory');
+      categorySelect.innerHTML = '';
+      Object.keys(appState.categories).forEach(key => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = appState.categories[key].name;
+        if (task && task.category === key) option.selected = true;
+        categorySelect.appendChild(option);
+      });
+
+      updateModalTags();
+      if (task) {
+        document.getElementById('modalTag').value = task.tag;
+      }
+
+      document.getElementById('editModal').classList.add('show');
+    }
+
+    function updateModalTags() {
+      const categoryKey = document.getElementById('modalCategory').value;
+      const tagSelect = document.getElementById('modalTag');
+      tagSelect.innerHTML = '';
+
+      const cat = appState.categories[categoryKey];
+      cat.tags.forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        tagSelect.appendChild(option);
+      });
+    }
+
+    function saveTask() {
+      const { day, hour } = appState.currentEditCell;
+      const category = document.getElementById('modalCategory').value;
+      const tag = document.getElementById('modalTag').value;
+
+      if (!appState.weekPlan[day]) appState.weekPlan[day] = {};
+      appState.weekPlan[day][hour] = { category, tag };
+      
+      saveData();
+      renderWeekTable();
+      closeModal();
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('show');
+    }
+
+    // ========== 日期选择器 ==========
+    function renderDateSelector() {
+      const container = document.getElementById('dateSelector');
+      container.innerHTML = '';
+
+      const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+      days.forEach((name, i) => {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+
+        const btn = document.createElement('div');
+        btn.className = 'date-btn';
+        if (i === appState.currentCheckinDay) btn.classList.add('active');
+        
+        btn.innerHTML = `
+          <div class="date-btn-day">${name}</div>
+          <div class="date-btn-date">${date.getMonth() + 1}/${date.getDate()}</div>
+        `;
+        
+        btn.onclick = () => {
+          appState.currentCheckinDay = i;
+          renderDateSelector();
+          renderCheckinList();
+        };
+
+        container.appendChild(btn);
+      });
+    }
+
+    // ========== 今日打卡列表 ==========
+    function renderCheckinList() {
+      const container = document.getElementById('checkinList');
+      container.innerHTML = '';
+
+      const day = appState.currentCheckinDay;
+      const plan = appState.weekPlan[day] || {};
+      
+      // 获取当前北京时间
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const beijingTime = new Date(utc + (3600000 * 8));
+      const currentDayOfWeek = beijingTime.getDay() === 0 ? 6 : beijingTime.getDay() - 1;
+      const currentHour = beijingTime.getHours();
+      
+      // 判断是否是未来时间
+      const isFutureDay = day > currentDayOfWeek;
+
+      for (let hour = 7; hour <= 23; hour++) {
+        const task = plan[hour];
+        const checkin = appState.weekCheckin[day]?.[hour];
+        
+        // 判断这个时段是否是未来
+        const isFuture = isFutureDay || (day === currentDayOfWeek && hour > currentHour);
+
+        const block = document.createElement('div');
+        block.className = 'time-block';
+
+        const timeLabel = document.createElement('div');
+        timeLabel.className = 'time-block-time';
+        timeLabel.textContent = `${hour}:00`;
+
+        const content = document.createElement('div');
+        content.className = 'time-block-content';
+
+        const tagEl = document.createElement('div');
+        tagEl.className = 'time-block-tag';
+
+        if (task) {
+          const cat = appState.categories[task.category];
+          tagEl.style.background = cat.color;
+          tagEl.textContent = task.tag;
+          
+          // 如果是未来时间,显示灰色
+          if (isFuture) {
+            tagEl.style.opacity = '0.4';
+            tagEl.textContent = task.tag + ' (未到时间)';
+          }
+        } else {
+          tagEl.classList.add('empty');
+          tagEl.textContent = '未安排';
+        }
+
+        const checkBtn = document.createElement('div');
+        checkBtn.className = 'check-btn';
+
+        if (task) {
+          if (isFuture) {
+            // 未来时间,灰色不可点击
+            checkBtn.style.opacity = '0.3';
+            checkBtn.style.cursor = 'not-allowed';
+            checkBtn.style.background = '#e0e0e0';
+            checkBtn.style.borderColor = '#e0e0e0';
+          } else {
+            // 过去和现在的时间,可以打卡
+            if (checkin === 'done') {
+              checkBtn.classList.add('done');
+              checkBtn.textContent = '✓';
+            } else if (checkin && checkin !== 'done') {
+              checkBtn.classList.add('undone');
+              checkBtn.textContent = '✗';
             }
-            renderRoleButtons();
-
-            // 从主进程加载持久化数据
-            if (window.api && window.api.loadData) {
-                try {
-                    const data = await window.api.loadData();
-                    if (data) {
-                        if (data.roles) roles = data.roles;
-                        if (data.weekData) {
-                            for (let d = 0; d < 7; d++) {
-                                if (data.weekData[d]) Object.assign(weekData[d], data.weekData[d]);
-                            }
-                        }
-                        if (typeof data.curRoleIdx === 'number') curRoleIdx = data.curRoleIdx;
-                        // 恢复已被填充的小时块显示
-                        for (let h = 7; h <= 23; h++) {
-                            const r = weekData[todayIndex][h];
-                            if (r) {
-                                const block = document.getElementById(`d-${h}`);
-                                block.style.background = r.color;
-                                block.innerText = r.icon + ' ' + r.name;
-                                block.classList.add('filled');
-                            }
-                        }
-                        renderRoleButtons();
-                    }
-                } catch (e) { console.warn('loadData error', e); }
-            }
+            checkBtn.onclick = () => toggleCheck(day, hour, checkin);
+          }
         }
 
-        function renderRoleButtons() {
-            const container = document.getElementById('roleContainer');
-            container.innerHTML = '';
-            roles.slice(0, 3).forEach((r, idx) => {
-                container.innerHTML += `\n                    <div class="role-btn ${idx===curRoleIdx?'active':''}" onclick="setRole(${idx}, this)">\n                        <div class="dot" style="background:${r.color}">${r.icon}</div>\n                        <span style="font-size:10px;margin-top:2px">${r.name}</span>\n                    </div>`;
-            });
-            container.innerHTML += `\n                <div class="role-btn" onclick="openAddModal()">\n                    <div class="dot" style="border:2px dashed #ccc; background:transparent;">+</div>\n                    <span style="font-size:10px;margin-top:2px">自定义</span>\n                </div>`;
+        content.appendChild(tagEl);
+        block.appendChild(timeLabel);
+        block.appendChild(content);
+        if (task) block.appendChild(checkBtn);
+
+        container.appendChild(block);
+      }
+    }
+
+    function toggleCheck(day, hour, currentStatus) {
+      if (!currentStatus) {
+        // 标记为完成
+        if (!appState.weekCheckin[day]) appState.weekCheckin[day] = {};
+        appState.weekCheckin[day][hour] = 'done';
+      } else if (currentStatus === 'done') {
+        // 标记为未完成,需要填写原因
+        appState.currentEditCell = { day, hour };
+        
+        // 填充原因选择器
+        const categorySelect = document.getElementById('reasonCategory');
+        categorySelect.innerHTML = '';
+        Object.keys(appState.categories).forEach(key => {
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = appState.categories[key].name;
+          categorySelect.appendChild(option);
+        });
+        updateReasonTags();
+
+        document.getElementById('reasonModal').classList.add('show');
+        return;
+      } else {
+        // 取消标记
+        delete appState.weekCheckin[day][hour];
+      }
+
+      saveData();
+      renderCheckinList();
+      renderReviewPage();
+    }
+
+    function updateReasonTags() {
+      const categoryKey = document.getElementById('reasonCategory').value;
+      const tagSelect = document.getElementById('reasonTag');
+      tagSelect.innerHTML = '';
+
+      const cat = appState.categories[categoryKey];
+      cat.tags.forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        tagSelect.appendChild(option);
+      });
+    }
+
+    function saveReason() {
+      const { day, hour } = appState.currentEditCell;
+      const category = document.getElementById('reasonCategory').value;
+      const tag = document.getElementById('reasonTag').value;
+
+      if (!appState.weekCheckin[day]) appState.weekCheckin[day] = {};
+      appState.weekCheckin[day][hour] = {
+        status: 'undone',
+        reason: { category, tag }
+      };
+
+      saveData();
+      renderCheckinList();
+      renderReviewPage();
+      closeReasonModal();
+    }
+
+    function closeReasonModal() {
+      document.getElementById('reasonModal').classList.remove('show');
+    }
+
+    // ========== 周复盘页面 ==========
+    function renderReviewPage() {
+      renderReviewStats();
+      renderCategoryBreakdown();
+      renderReviewWeekTable();
+    }
+
+    function renderReviewStats() {
+      let totalPlanned = 0;
+      let totalDone = 0;
+
+      for (let day = 0; day < 7; day++) {
+        const plan = appState.weekPlan[day] || {};
+        const checkin = appState.weekCheckin[day] || {};
+
+        for (let hour = 7; hour <= 23; hour++) {
+          if (plan[hour]) {
+            totalPlanned++;
+            if (checkin[hour] === 'done') totalDone++;
+          }
         }
+      }
 
-        function startGame() { document.getElementById('intro-layer').style.opacity = 0; setTimeout(()=> document.getElementById('intro-layer').style.display = 'none', 600); document.getElementById('drawer').style.display = 'block'; }
+      const rate = totalPlanned > 0 ? Math.round((totalDone / totalPlanned) * 100) : 0;
+      document.getElementById('statCompletion').textContent = `${rate}%`;
+      document.getElementById('statTotal').textContent = `${totalDone}/${totalPlanned}`;
+    }
 
-        function setRole(idx, el) { curRoleIdx = idx; document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); saveAppData(); }
+    function renderCategoryBreakdown() {
+      const container = document.getElementById('categoryBreakdown');
+      container.innerHTML = '';
 
-        async function paintDaily(hour) {
-            const r = roles[curRoleIdx];
-            const block = document.getElementById(`d-${hour}`);
-            block.style.background = r.color;
-            block.innerText = r.icon + ' ' + r.name;
-            block.classList.add('filled');
-            weekData[todayIndex][hour] = r;
-            if(navigator.vibrate) navigator.vibrate(10);
-            await saveAppData();
+      const stats = {};
+      let total = 0;
+
+      // 统计各分类时间
+      for (let day = 0; day < 7; day++) {
+        const plan = appState.weekPlan[day] || {};
+        const checkin = appState.weekCheckin[day] || {};
+
+        for (let hour = 7; hour <= 23; hour++) {
+          const task = plan[hour];
+          if (!task) continue;
+
+          const category = checkin[hour] === 'done' ? task.category :
+                          (checkin[hour]?.reason ? checkin[hour].reason.category : null);
+
+          if (category) {
+            stats[category] = (stats[category] || 0) + 1;
+            total++;
+          }
         }
+      }
 
-        function switchPage(page, navEl) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-'+page).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            navEl.classList.add('active');
-            document.getElementById('drawer').style.display = (page === 'daily') ? 'block' : 'none';
-            document.getElementById('pageTitle').innerText = (page === 'daily') ? '今日剧本' : '导演复盘';
-            if (page === 'weekly') renderWeeklyView();
-        }
+      // 渲染柱状图
+      Object.keys(appState.categories).forEach(key => {
+        const cat = appState.categories[key];
+        const count = stats[key] || 0;
+        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
 
-        function renderWeeklyView() {
-            const container = document.getElementById('week-grid');
-            container.innerHTML = '';
-            const days = ['','一','二','三','四','五','六','日'];
-            days.forEach((d, i) => {
-                const isToday = (i-1 === todayIndex);
-                container.innerHTML += `<div class="th" style="${isToday?'color:#333;font-weight:bold':''}">${d}</div>`;
-            });
-            for (let h = 7; h <= 23; h++) {
-                container.innerHTML += `<div class="td-time">${h}</div>`;
-                for (let d = 0; d < 7; d++) {
-                    const data = weekData[d][h];
-                    let bg = '#fff'; let txt = '';
-                    if (data) { bg = data.color; txt = data.icon; }
-                    else if (d === todayIndex) { bg = '#fafafa'; }
-                    container.innerHTML += `<div class="td-cell ${d === todayIndex ? 'highlight-col' : ''}" style="background:${bg}">${txt}</div>`;
-                }
-            }
-        }
+        const bar = document.createElement('div');
+        bar.className = 'category-bar';
+        bar.innerHTML = `
+          <div class="category-bar-label">
+            <span>${cat.name}</span>
+            <span>${count}小时 (${percent}%)</span>
+          </div>
+          <div class="category-bar-track">
+            <div class="category-bar-fill" style="width: ${percent}%; background: ${cat.color}">
+            </div>
+          </div>
+        `;
+        container.appendChild(bar);
+      });
+    }
 
-        function openAddModal() {
-            document.getElementById('addModal').style.display = 'flex';
-            const colors = ['#FFADAD','#FFD6A5','#FDFFB6','#CAFFBF','#9BF6FF','#A0C4FF','#BDB2FF','#FFC6FF'];
-            const grid = document.getElementById('colorGrid');
-            grid.innerHTML = '';
-            colors.forEach(c => {
-                let d = document.createElement('div');
-                d.className = 'color-opt'; d.style.background = c;
-                d.onclick = () => { selColor = c; document.querySelectorAll('.color-opt').forEach(x=>x.style.border=''); d.style.border = '2px solid #333'; };
-                grid.appendChild(d);
-            });
-        }
-        function closeModal() { document.getElementById('addModal').style.display = 'none'; }
+    function renderReviewWeekTable() {
+      const container = document.getElementById('reviewWeekTable');
+      container.innerHTML = '';
 
-        function saveRole() {
-            const name = document.getElementById('newRoleName').value;
-            if(name) {
-                roles[2] = { name: name, color: selColor, icon: '✨' };
-                renderRoleButtons();
-                // 选中第3个
-                const btns = document.querySelectorAll('.role-btn');
-                if (btns[2]) setRole(2, btns[2]);
-                closeModal();
-            }
-        }
+      // 表头
+      const headers = ['', '一', '二', '三', '四', '五', '六', '日'];
+      headers.forEach(h => {
+        const cell = document.createElement('div');
+        cell.className = 'week-header';
+        cell.textContent = h;
+        container.appendChild(cell);
+      });
 
-        function callAI() {
-            const btn = document.getElementById('ai-btn-text');
-            const output = document.getElementById('ai-output');
-            btn.innerText = "⏳ 正在分析剧本...";
-            output.style.display = 'none';
-            setTimeout(() => {
-                btn.innerText = "✨ 分析完成";
-                output.style.display = 'block';
-                output.innerHTML = `<strong>🤖 DeepSeek 洞察：</strong><br>本周【打工人】角色占比过高，建议周末增加【爱自己】的时间。`;
-                document.querySelector('#page-weekly').scrollTop = 1000;
-            }, 1500);
-        }
+      // 时间行
+      for (let hour = 7; hour <= 23; hour++) {
+        const timeLabel = document.createElement('div');
+        timeLabel.className = 'time-label';
+        timeLabel.textContent = `${hour}:00`;
+        container.appendChild(timeLabel);
 
-        async function saveAppData() {
-            if (window.api && window.api.saveData) {
-                try {
-                    await window.api.saveData({ roles, weekData, curRoleIdx });
-                } catch (e) { console.warn('save failed', e); }
-            }
-        }
+        for (let day = 0; day < 7; day++) {
+          const cell = document.createElement('div');
+          cell.className = 'time-cell';
 
-        async function exportAsImage() {
-            const element = document.querySelector('.page.active');
-            const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            const filename = `life-script-${new Date().toISOString().slice(0,10)}.png`;
-            if (window.api && window.api.saveFile) {
-                window.api.saveFile(canvas.toDataURL('image/png'), filename);
+          const task = appState.weekPlan[day]?.[hour];
+          const checkin = appState.weekCheckin[day]?.[hour];
+
+          if (task) {
+            if (checkin === 'done') {
+              cell.style.background = 'var(--done)';
+              cell.textContent = '✓';
+            } else if (checkin?.status === 'undone') {
+              cell.style.background = 'var(--undone)';
+              cell.textContent = '✗';
             } else {
-                link.download = filename;
-                link.click();
+              const cat = appState.categories[task.category];
+              cell.style.background = cat.color;
+              cell.style.opacity = '0.3';
+              cell.textContent = task.tag;
             }
+            cell.classList.add('filled');
+          }
+
+          container.appendChild(cell);
+        }
+      }
+    }
+
+    // ========== AI 分析 ==========
+    function updateAPIProvider() {
+      const provider = document.getElementById('apiProvider').value;
+      const label = document.getElementById('apiKeyLabel');
+      
+      if (provider === 'deepseek') {
+        label.textContent = 'DeepSeek API Key';
+      } else {
+        label.textContent = '智谱AI API Key';
+      }
+    }
+
+    async function analyzeWithAI() {
+      const apiKey = appState.apiKey || document.getElementById('apiKey').value;
+      if (!apiKey) {
+        alert('请先在工具页配置 API Key');
+        switchPage('tools');
+        document.querySelectorAll('.nav-item')[3].click();
+        return;
+      }
+
+      const btn = document.getElementById('aiBtn');
+      const btnText = document.getElementById('aiBtnText');
+      const result = document.getElementById('aiResult');
+
+      btn.disabled = true;
+      btnText.textContent = '⏳ AI 正在深度分析...';
+      result.classList.remove('show');
+
+      const analysisData = buildDetailedAnalysisData();
+      const prompt = buildAnalysisPrompt(analysisData);
+
+      try {
+        let response;
+        const provider = appState.apiProvider || 'zhipu';
+
+        if (provider === 'deepseek') {
+          response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: 'deepseek-chat',
+              messages: [
+                {
+                  role: 'system',
+                  content: '你是一位专业的人生导演和时间管理教练,擅长从"剧本-演员-导演"的视角分析用户的时间管理数据。你的分析要温暖、有力量、有洞察,像一位懂我的导演在给予真诚的指导。你的分析要深入、具体、有可执行性。'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.8,
+              max_tokens: 2000
+            })
+          });
+        } else {
+          // 智谱API
+          response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: 'glm-4',
+              messages: [
+                {
+                  role: 'system',
+                  content: '你是一位专业的人生导演和时间管理教练,擅长从"剧本-演员-导演"的视角分析用户的时间管理数据。你的分析要温暖、有力量、有洞察,像一位懂我的导演在给予真诚的指导。你的分析要深入、具体、有可执行性。'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.8,
+              max_tokens: 2000
+            })
+          });
         }
 
-        window.addEventListener('beforeunload', saveAppData);
-        init();
-    </script>
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error?.message || `API请求失败 (${response.status})`);
+        }
+
+        const data = await response.json();
+        
+        // 增强文本清理和智能格式化
+        let rawText = data.choices[0].message.content
+          .replace(/###\s*/g, '')
+          .replace(/##\s*/g, '')
+          .replace(/#\s*/g, '')
+          .replace(/\*\*\*/g, '')
+          .replace(/\*\*/g, '')
+          .replace(/\*/g, '');
+        
+        // 智能格式化
+        const lines = rawText.split('\n').filter(line => line.trim().length > 0);
+        let formattedHTML = '<div style="font-weight:600; margin-bottom:10px;">🎬 导演视角 · AI 洞察</div>';
+        
+        lines.forEach((line, idx) => {
+          line = line.trim();
+          
+          // 检测重点标题(以数字或中文数字开头)
+          const pointMatch = line.match(/^([一二三四五1-9])[\s、\.．：:]\s*(.+)/);
+          if (pointMatch) {
+            const title = pointMatch[2];
+            // 判断是否是"下周建议"或"改进建议"
+            if (title.includes('下周建议') || title.includes('改进建议') || title.includes('下月') || title.includes('建议')) {
+              // 下周建议/改进建议 - 只加粗,不加【】
+              if (idx > 0) formattedHTML += '<br>';
+              formattedHTML += `<div style="font-weight:600; margin:10px 0 5px 0;">${title}</div>`;
+            } else {
+              // 其他重点 - 加【】
+              if (idx > 0) formattedHTML += '<br>';
+              formattedHTML += `<div style="margin:10px 0 5px 0;">【${title}】</div>`;
+            }
+          }
+          // 列表项
+          else if (line.startsWith('-')) {
+            formattedHTML += `<div style="margin:4px 0;">${line}</div>`;
+          }
+          // 普通段落
+          else {
+            formattedHTML += `<div style="margin:6px 0;">${line}</div>`;
+          }
+        });
+
+        result.innerHTML = formattedHTML;
+        result.classList.add('show');
+        btnText.textContent = '✨ 重新分析';
+
+      } catch (error) {
+        console.error('AI分析错误:', error);
+        alert('AI 分析失败: ' + error.message + '\n\n请检查:\n1. API Key是否正确\n2. 是否有余额\n3. 网络连接是否正常');
+        btnText.textContent = '✨ AI 分析本周数据';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function buildAnalysisPrompt(analysisData) {
+      return `请深度分析我本周的"人生剧本"执行情况:
+
+【知行合一情况】
+- 计划完成率: ${analysisData.completionRate}%
+- 计划时段: ${analysisData.totalPlanned}小时
+- 实际完成: ${analysisData.totalDone}小时
+- 未完成: ${analysisData.totalUndone}小时
+
+【时间实际分布】(我实际做了什么)
+${Object.keys(analysisData.actualDistribution).map(key => {
+  const cat = appState.categories[key];
+  const hours = analysisData.actualDistribution[key];
+  const percent = analysisData.actualTotal > 0 ? Math.round(hours/analysisData.actualTotal*100) : 0;
+  return `- ${cat.name}: ${hours}小时 (${percent}%)`;
+}).join('\n')}
+
+【计划vs实际对比】(计划与现实的差距)
+${Object.keys(appState.categories).map(key => {
+  const cat = appState.categories[key];
+  const planned = analysisData.plannedDistribution[key] || 0;
+  const actual = analysisData.actualDistribution[key] || 0;
+  if (planned === 0 && actual === 0) return '';
+  const diff = actual - planned;
+  const sign = diff > 0 ? '+' : '';
+  return `- ${cat.name}: 计划${planned}h → 实际${actual}h (${sign}${diff}h)`;
+}).filter(Boolean).join('\n')}
+
+【未完成原因分析】(哪些计划被什么替代了)
+${analysisData.undoneReasons.length > 0 ? 
+  analysisData.undoneReasons.slice(0, 3).map(r => `- 原计划${r.planned},实际做了${r.actual}`).join('\n') : 
+  '本周全部按计划执行,知行合一 ✓'}
+
+【导演复盘笔记】(我自己的思考)
+高光时刻: ${appState.reviewNotes.highlight || '未填写'}
+穿帮镜头: ${appState.reviewNotes.ng || '未填写'}
+导演思考: ${appState.reviewNotes.thinking || '未填写'}
+
+---
+
+请你作为一位专业的"人生导演"和时间管理教练,从导演复盘的角度给出深度分析。
+
+必须包含以下5个部分(每部分都要充分展开,不能省略):
+
+1. **【剧本总结】** 用一句幽默、有洞察力的话概括本周的时间分配特点
+   - 例如:"你可真是个在数字世界里披星戴月的创作者"
+   - 例如:"一位在探索中迷路的创作者——计划宏大,但实际执行时却偏离了剧本"
+   - 要有个性,要准确反映数据特征
+
+2. **【知行合一】** 深度分析计划完成率${analysisData.completionRate}%的含义
+   - 这个完成率说明了什么?
+   - 计划制定是否合理?
+   - 执行力如何?
+   - 哪些类型的时间容易执行,哪些容易被忽略?
+
+3. **【时间分配】** 深入分析时间分布是否符合理想人生剧本
+   - 工作时间${analysisData.actualDistribution.work || 0}h占比${analysisData.actualTotal > 0 ? Math.round((analysisData.actualDistribution.work || 0)/analysisData.actualTotal*100) : 0}%,是否过多/过少?
+   - 自我成长、健康、家庭的时间是否均衡?
+   - 时间分配反映出什么样的生活状态和价值观?
+
+4. **【穿帮分析】** 结合用户的复盘笔记,给出真诚的反馈
+   - 高光时刻值得肯定的地方
+   - 穿帮镜头背后的深层原因
+   - 导演思考是否切中要害
+
+5. **【下周建议】** 3条具体可执行的优化建议
+   - 针对数据中发现的问题
+   - 结合用户的复盘思考
+   - 要具体,要可执行
+
+要求:
+- 总字数300-400字,每个部分都要充分展开
+- 语言要温暖、真诚、有力量,像一位懂我的导演在给我指导
+- 要基于数据说话,不要空洞的鼓励
+- 要有洞察,要点出问题,但也要给出希望`;
+    }
+
+    function buildDetailedAnalysisData() {
+      let totalPlanned = 0;
+      let totalDone = 0;
+      let totalUndone = 0;
+      let actualTotal = 0;
+      
+      const plannedDistribution = {};
+      const actualDistribution = {};
+      const undoneReasons = [];
+
+      for (let day = 0; day < 7; day++) {
+        const plan = appState.weekPlan[day] || {};
+        const checkin = appState.weekCheckin[day] || {};
+
+        for (let hour = 7; hour <= 23; hour++) {
+          const task = plan[hour];
+          if (!task) continue;
+
+          totalPlanned++;
+          plannedDistribution[task.category] = (plannedDistribution[task.category] || 0) + 1;
+
+          const checkinStatus = checkin[hour];
+          
+          if (checkinStatus === 'done') {
+            totalDone++;
+            actualDistribution[task.category] = (actualDistribution[task.category] || 0) + 1;
+            actualTotal++;
+          } else if (checkinStatus?.status === 'undone' && checkinStatus.reason) {
+            totalUndone++;
+            const reasonCat = checkinStatus.reason.category;
+            actualDistribution[reasonCat] = (actualDistribution[reasonCat] || 0) + 1;
+            actualTotal++;
+            
+            undoneReasons.push({
+              planned: `${appState.categories[task.category].name}-${task.tag}`,
+              actual: `${appState.categories[reasonCat].name}-${checkinStatus.reason.tag}`
+            });
+          }
+        }
+      }
+
+      return {
+        totalPlanned,
+        totalDone,
+        totalUndone,
+        actualTotal,
+        completionRate: totalPlanned > 0 ? Math.round((totalDone / totalPlanned) * 100) : 0,
+        plannedDistribution,
+        actualDistribution,
+        undoneReasons
+      };
+    }
+
+    function saveAPIKey() {
+      appState.apiKey = document.getElementById('apiKey').value;
+      appState.apiProvider = document.getElementById('apiProvider').value;
+      saveData();
+      alert('API配置已保存');
+    }
+
+    // ========== 分享功能 ==========
+    // 1. 分享周计划表格
+    async function shareWeekPlan() {
+      const canvas = await captureWeekTable('plan');
+      downloadCanvas(canvas, '本周剧本');
+    }
+
+    // 2. 分享执行情况表格
+    async function shareWeekReview() {
+      // 使用和shareWeekReviewPage相同的精简版卡片
+      await shareWeekReviewPage();
+    }
+
+    // 3. 分享AI洞察
+    async function shareAIInsight() {
+      const aiResult = document.getElementById('aiResult');
+      if (!aiResult.classList.contains('show')) {
+        alert('请先进行AI分析');
+        return;
+      }
+
+      const shareCard = createAIShareCard();
+      const canvas = await html2canvas(shareCard, {
+        backgroundColor: '#6C5CE7',
+        scale: 2,
+        logging: false
+      });
+      
+      document.body.removeChild(shareCard);
+      downloadCanvas(canvas, 'AI洞察');
+    }
+
+    // 4. 分享数据卡片
+    async function shareStatCard() {
+      const card = createStatShareCard();
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        logging: false,
+        backgroundColor: '#667eea',
+        allowTaint: true,
+        useCORS: true
+      });
+      
+      document.body.removeChild(card);
+      downloadCanvas(canvas, '本周数据');
+    }
+
+    // 5. 组合分享 - 用户可多选模块
+    async function shareCustomCard() {
+      const opt1 = document.getElementById('shareOpt1')?.checked; // 周度审视
+      const opt2 = document.getElementById('shareOpt2')?.checked; // 时间分布
+      const opt3 = document.getElementById('shareOpt3')?.checked; // 复盘笔记
+      
+      if (!opt1 && !opt2 && !opt3) {
+        alert('请至少选择一个模块');
+        return;
+      }
+      
+      try {
+        const card = createCustomShareCard(opt1, opt2, opt3);
+        const canvas = await html2canvas(card, {
+          scale: 2,
+          logging: false,
+          backgroundColor: '#667eea',
+          allowTaint: true,
+          useCORS: true
+        });
+        
+        document.body.removeChild(card);
+        downloadCanvas(canvas, '导演总结');
+      } catch(e) {
+        console.error('组合分享失败:', e);
+        alert('生成分享图失败,请查看控制台');
+      }
+    }
+    
+    // 创建组合分享卡片
+    function createCustomShareCard(showStats, showDistribution, showNotes) {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:40px; color:white; font-family: "Noto Sans SC", sans-serif;';
+
+      // 标题
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:28px; font-weight:700; margin-bottom:20px; font-family: "Noto Serif SC", serif;';
+      title.textContent = `${appState.userName} 的人生剧本`;
+      card.appendChild(title);
+
+      // 周信息
+      const weekInfo = document.createElement('div');
+      weekInfo.style.cssText = 'font-size:14px; opacity:0.9; margin-bottom:30px;';
+      const now = new Date();
+      const weekNum = getWeekNumber(now);
+      weekInfo.textContent = `2026年 第${weekNum}周`;
+      card.appendChild(weekInfo);
+
+      const analysisData = buildDetailedAnalysisData(); // 使用正确的函数名
+
+      // 模块1: 周度审视
+      if (showStats) {
+        const statsBox = document.createElement('div');
+        statsBox.style.cssText = 'background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); padding:25px; margin-bottom:20px;';
+        
+        const statsGrid = document.createElement('div');
+        statsGrid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:25px; margin-bottom:20px;';
+        
+        // 获取评级信息
+        const rating = getRatingInfo(analysisData.completionRate);
+        
+        statsGrid.innerHTML = `
+          <div style="text-align:center;">
+            <div style="font-size:48px; font-weight:700; margin-bottom:10px;">${analysisData.completionRate}%</div>
+            <div style="font-size:14px; opacity:0.9; margin-bottom:8px;">知行合一率</div>
+            <div style="display:inline-block; background:${rating.color}20; color:${rating.color}; padding:4px 12px; border-radius:12px; font-size:12px; font-weight:600;">
+              ${rating.icon} ${rating.level}
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:48px; font-weight:700; margin-bottom:10px;">${analysisData.totalDone}/${analysisData.totalPlanned}</div>
+            <div style="font-size:14px; opacity:0.9;">完成时段</div>
+          </div>
+        `;
+        statsBox.appendChild(statsGrid);
+        
+        // 添加评级说明和理想区间提示
+        const ratingInfo = document.createElement('div');
+        ratingInfo.style.cssText = `
+          background:${rating.inIdealRange ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255,255,255,0.1)'};
+          padding:15px;
+          border-radius:10px;
+          font-size:13px;
+          line-height:1.6;
+          ${rating.inIdealRange ? 'border:2px solid rgba(76, 175, 80, 0.3);' : ''}
+        `;
+        
+        if (rating.inIdealRange) {
+          ratingInfo.innerHTML = `
+            <div style="font-weight:600; margin-bottom:8px; color:#4CAF50;">✓ 在理想区间内 (75-85%)</div>
+            <div>${rating.encouragement}</div>
+          `;
+        } else {
+          ratingInfo.innerHTML = `
+            <div style="font-weight:600; margin-bottom:8px;">${rating.message}</div>
+            <div style="opacity:0.9;">${rating.encouragement}</div>
+            <div style="margin-top:10px; font-size:12px; opacity:0.7;">
+              💡 理想区间: 75-85% · 既有挑战性又切实可行
+            </div>
+          `;
+        }
+        
+        statsBox.appendChild(ratingInfo);
+        card.appendChild(statsBox);
+      }
+
+      // 模块2: 时间分布
+      if (showDistribution) {
+        const distBox = document.createElement('div');
+        distBox.style.cssText = 'background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); padding:25px; margin-bottom:20px;';
+        
+        const distTitle = document.createElement('div');
+        distTitle.style.cssText = 'font-size:16px; font-weight:600; margin-bottom:15px; opacity:0.9;';
+        distTitle.innerHTML = '⏰ 时间分布';
+        distBox.appendChild(distTitle);
+        
+        Object.keys(analysisData.actualDistribution).forEach(key => {
+          const cat = appState.categories[key];
+          const hours = analysisData.actualDistribution[key];
+          const percent = analysisData.actualTotal > 0 ? Math.round((hours / analysisData.actualTotal) * 100) : 0;
+          
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:14px;';
+          row.innerHTML = `
+            <span>${cat.name}</span>
+            <span style="font-weight:600;">${hours}小时 (${percent}%)</span>
+          `;
+          distBox.appendChild(row);
+        });
+        card.appendChild(distBox);
+      }
+
+      // 模块3: 复盘笔记
+      if (showNotes) {
+        const notesBox = document.createElement('div');
+        notesBox.style.cssText = 'background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); padding:25px; margin-bottom:20px;';
+        
+        let hasContent = false;
+        
+        if (appState.reviewNotes.highlight) {
+          const h = document.createElement('div');
+          h.style.cssText = 'margin-bottom:15px;';
+          h.innerHTML = `<div style="font-size:14px; font-weight:600; margin-bottom:8px; opacity:0.9;">🌟 高光时刻</div><div style="font-size:13px; line-height:1.7; opacity:0.95;">${appState.reviewNotes.highlight}</div>`;
+          notesBox.appendChild(h);
+          hasContent = true;
+        }
+        
+        if (appState.reviewNotes.ng) {
+          const ng = document.createElement('div');
+          ng.style.cssText = 'margin-bottom:15px;';
+          ng.innerHTML = `<div style="font-size:14px; font-weight:600; margin-bottom:8px; opacity:0.9;">💣 穿帮镜头</div><div style="font-size:13px; line-height:1.7; opacity:0.95;">${appState.reviewNotes.ng}</div>`;
+          notesBox.appendChild(ng);
+          hasContent = true;
+        }
+        
+        if (appState.reviewNotes.thinking) {
+          const t = document.createElement('div');
+          t.innerHTML = `<div style="font-size:14px; font-weight:600; margin-bottom:8px; opacity:0.9;">💡 导演思考</div><div style="font-size:13px; line-height:1.7; opacity:0.95;">${appState.reviewNotes.thinking}</div>`;
+          notesBox.appendChild(t);
+          hasContent = true;
+        }
+        
+        if (hasContent) {
+          card.appendChild(notesBox);
+        }
+      }
+
+      // 底部水印
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; opacity:0.6; margin-top:20px;';
+      watermark.innerHTML = `${appState.userName}的人生剧本<br>每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 6. 分享周度审视页面 (白色卡片风格) - 精简版
+    async function shareWeekReviewPage() {
+      const card = createCompactWeekReviewCard();
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        logging: false,
+        backgroundColor: '#ffffff',
+        allowTaint: true,
+        useCORS: true
+      });
+      
+      document.body.removeChild(card);
+      downloadCanvas(canvas, '周度审视');
+    }
+
+    // 创建精简版周度审视分享卡片(只包含:统计+分布+执行表格)
+    function createCompactWeekReviewCard() {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:white; padding:40px; font-family: "Noto Sans SC", sans-serif;';
+
+      // 标题区
+      const header = document.createElement('div');
+      header.style.cssText = 'margin-bottom:30px;';
+      
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:24px; font-weight:700; color:#2C2C2C; margin-bottom:10px;';
+      title.textContent = '📊 周度审视';
+      header.appendChild(title);
+      
+      const subtitle = document.createElement('div');
+      subtitle.style.cssText = 'font-size:14px; color:#8B8B8B;';
+      const now = new Date();
+      const weekNum = getWeekNumber(now);
+      subtitle.textContent = `${appState.userName} · 2026年第${weekNum}周`;
+      header.appendChild(subtitle);
+      
+      card.appendChild(header);
+
+      const analysisData = buildDetailedAnalysisData();
+      
+      // 获取评级信息
+      const rating = getRatingInfo(analysisData.completionRate);
+
+      // 1. 统计卡片 + 评级
+      const statsGrid = document.createElement('div');
+      statsGrid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;';
+      
+      statsGrid.innerHTML = `
+        <div style="background:#f9f9f9; border-radius:12px; padding:25px; text-align:center;">
+          <div style="font-size:42px; font-weight:700; color:#2C2C2C; margin-bottom:8px;">${analysisData.completionRate}%</div>
+          <div style="font-size:13px; color:#8B8B8B; margin-bottom:8px;">知行合一率</div>
+          <div style="display:inline-block; background:${rating.color}20; color:${rating.color}; padding:4px 12px; border-radius:12px; font-size:12px; font-weight:600;">
+            ${rating.icon} ${rating.level}
+          </div>
+        </div>
+        <div style="background:#f9f9f9; border-radius:12px; padding:25px; text-align:center;">
+          <div style="font-size:42px; font-weight:700; color:#2C2C2C; margin-bottom:8px;">${analysisData.totalDone}/${analysisData.totalPlanned}</div>
+          <div style="font-size:13px; color:#8B8B8B;">完成时段</div>
+        </div>
+      `;
+      card.appendChild(statsGrid);
+      
+      // 评级说明(只在理想区间外显示)
+      if (!rating.inIdealRange) {
+        const ratingTip = document.createElement('div');
+        ratingTip.style.cssText = 'background:#f9f9f9; border-radius:8px; padding:12px; margin-bottom:25px; font-size:12px; color:#666; text-align:center;';
+        ratingTip.innerHTML = `💡 理想区间: 75-85% · 既有挑战性又切实可行`;
+        card.appendChild(ratingTip);
+      } else {
+        const ratingTip = document.createElement('div');
+        ratingTip.style.cssText = 'background:#E8F5E9; border-radius:8px; padding:12px; margin-bottom:25px; font-size:12px; color:#4CAF50; text-align:center; font-weight:600;';
+        ratingTip.innerHTML = `✓ 在理想区间内!继续保持`;
+        card.appendChild(ratingTip);
+      }
+
+      // 2. 时间分布
+      const distBox = document.createElement('div');
+      distBox.style.cssText = 'background:#f9f9f9; border-radius:12px; padding:20px; margin-bottom:25px;';
+      
+      const distTitle = document.createElement('div');
+      distTitle.style.cssText = 'font-size:15px; font-weight:600; margin-bottom:15px; color:#2C2C2C; display:flex; align-items:center; gap:6px;';
+      distTitle.innerHTML = '⏰ 时间分布';
+      distBox.appendChild(distTitle);
+      
+      Object.keys(analysisData.actualDistribution).forEach(key => {
+        const cat = appState.categories[key];
+        const hours = analysisData.actualDistribution[key];
+        const percent = analysisData.actualTotal > 0 ? Math.round((hours / analysisData.actualTotal) * 100) : 0;
+        
+        const row = document.createElement('div');
+        row.style.cssText = 'margin-bottom:12px;';
+        
+        const label = document.createElement('div');
+        label.style.cssText = 'display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:#2C2C2C;';
+        label.innerHTML = `<span>${cat.name}</span><span style="font-weight:600;">${hours}小时 (${percent}%)</span>`;
+        
+        const track = document.createElement('div');
+        track.style.cssText = 'height:8px; background:#e5e5e5; border-radius:4px; overflow:hidden;';
+        
+        const fill = document.createElement('div');
+        fill.style.cssText = `width:${percent}%; height:100%; background:${cat.color}; border-radius:4px;`;
+        
+        track.appendChild(fill);
+        row.appendChild(label);
+        row.appendChild(track);
+        distBox.appendChild(row);
+      });
+      
+      card.appendChild(distBox);
+
+      // 3. 本周执行情况(简化表格)
+      const tableBox = document.createElement('div');
+      tableBox.style.cssText = 'background:#f9f9f9; border-radius:12px; padding:20px;';
+      
+      const tableTitle = document.createElement('div');
+      tableTitle.style.cssText = 'font-size:15px; font-weight:600; margin-bottom:15px; color:#2C2C2C;';
+      tableTitle.textContent = '📅 本周执行情况';
+      tableBox.appendChild(tableTitle);
+      
+      // 创建简化的表格
+      const table = document.createElement('div');
+      table.style.cssText = 'font-size:11px;';
+      
+      // 表头
+      const thead = document.createElement('div');
+      thead.style.cssText = 'display:grid; grid-template-columns: 40px repeat(7, 1fr); gap:2px; margin-bottom:4px; font-weight:600; color:#666;';
+      thead.innerHTML = `
+        <div style="text-align:center; padding:4px;">时段</div>
+        <div style="text-align:center; padding:4px;">周一</div>
+        <div style="text-align:center; padding:4px;">周二</div>
+        <div style="text-align:center; padding:4px;">周三</div>
+        <div style="text-align:center; padding:4px;">周四</div>
+        <div style="text-align:center; padding:4px;">周五</div>
+        <div style="text-align:center; padding:4px;">周六</div>
+        <div style="text-align:center; padding:4px;">周日</div>
+      `;
+      table.appendChild(thead);
+      
+      // 表身(只显示有计划的时段)
+      for (let hour = 7; hour <= 23; hour++) {
+        let hasData = false;
+        for (let day = 0; day < 7; day++) {
+          if (appState.weekPlan[day]?.[hour]) {
+            hasData = true;
+            break;
+          }
+        }
+        
+        if (!hasData) continue; // 跳过无数据的时段
+        
+        const row = document.createElement('div');
+        row.style.cssText = 'display:grid; grid-template-columns: 40px repeat(7, 1fr); gap:2px; margin-bottom:2px;';
+        
+        row.innerHTML = `<div style="text-align:center; padding:4px; font-size:10px; color:#999;">${hour}:00</div>`;
+        
+        for (let day = 0; day < 7; day++) {
+          const task = appState.weekPlan[day]?.[hour];
+          const checkin = appState.weekCheckin[day]?.[hour];
+          
+          let cellStyle = 'text-align:center; padding:4px; border-radius:4px; ';
+          let cellContent = '';
+          
+          if (!task) {
+            cellStyle += 'background:#f5f5f5;';
+          } else if (checkin === 'done') {
+            cellStyle += 'background:#4CAF50; color:white;';
+            cellContent = '✓';
+          } else if (checkin?.reason) {
+            cellStyle += 'background:#FF9800; color:white;';
+            cellContent = '○';
+          } else {
+            cellStyle += 'background:#e0e0e0;';
+          }
+          
+          row.innerHTML += `<div style="${cellStyle}">${cellContent}</div>`;
+        }
+        
+        table.appendChild(row);
+      }
+      
+      tableBox.appendChild(table);
+      card.appendChild(tableBox);
+
+      // 底部水印
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; color:#999; margin-top:25px; padding-top:20px; border-top:1px solid #e5e5e5;';
+      watermark.textContent = `${appState.userName}的人生剧本 · 每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 7. 分享月度审视页面
+    async function shareMonthReviewPage() {
+      const card = createMonthReviewCard();
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      document.body.removeChild(card);
+      downloadCanvas(canvas, '月度审视');
+    }
+
+    // 创建月度审视分享卡片 (类似周度风格)
+    function createMonthReviewCard() {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:white; padding:40px; font-family: "Noto Sans SC", sans-serif;';
+
+      // 标题
+      const header = document.createElement('div');
+      header.style.cssText = 'margin-bottom:30px;';
+      
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:24px; font-weight:700; color:#2C2C2C; margin-bottom:10px;';
+      title.textContent = '📅 月度审视';
+      header.appendChild(title);
+      
+      const subtitle = document.createElement('div');
+      subtitle.style.cssText = 'font-size:14px; color:#8B8B8B;';
+      const now = new Date();
+      subtitle.textContent = `${appState.userName} · ${now.getFullYear()}年${now.getMonth() + 1}月`;
+      header.appendChild(subtitle);
+      
+      card.appendChild(header);
+
+      const monthData = getMonthData();
+      
+      // 获取评级信息
+      const rating = getRatingInfo(monthData.completionRate);
+
+      // 统计卡片 + 评级
+      const statsGrid = document.createElement('div');
+      statsGrid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;';
+      
+      statsGrid.innerHTML = `
+        <div style="background:#f9f9f9; border-radius:12px; padding:25px; text-align:center;">
+          <div style="font-size:42px; font-weight:700; color:#2C2C2C; margin-bottom:8px;">${monthData.completionRate}%</div>
+          <div style="font-size:13px; color:#8B8B8B; margin-bottom:8px;">月度知行合一率</div>
+          <div style="display:inline-block; background:${rating.color}20; color:${rating.color}; padding:4px 12px; border-radius:12px; font-size:12px; font-weight:600;">
+            ${rating.icon} ${rating.level}
+          </div>
+        </div>
+        <div style="background:#f9f9f9; border-radius:12px; padding:25px; text-align:center;">
+          <div style="font-size:42px; font-weight:700; color:#2C2C2C; margin-bottom:8px;">${monthData.totalDone}/${monthData.totalPlanned}</div>
+          <div style="font-size:13px; color:#8B8B8B;">完成时段</div>
+        </div>
+      `;
+      card.appendChild(statsGrid);
+      
+      // 评级说明
+      if (!rating.inIdealRange) {
+        const ratingTip = document.createElement('div');
+        ratingTip.style.cssText = 'background:#f9f9f9; border-radius:8px; padding:12px; margin-bottom:25px; font-size:12px; color:#666; text-align:center;';
+        ratingTip.innerHTML = `💡 理想区间: 75-85% · 既有挑战性又切实可行`;
+        card.appendChild(ratingTip);
+      } else {
+        const ratingTip = document.createElement('div');
+        ratingTip.style.cssText = 'background:#E8F5E9; border-radius:8px; padding:12px; margin-bottom:25px; font-size:12px; color:#4CAF50; text-align:center; font-weight:600;';
+        ratingTip.innerHTML = `✓ 在理想区间内!继续保持`;
+        card.appendChild(ratingTip);
+      }
+
+      // 周度趋势
+      if (monthData.weeklyStats.length > 0) {
+        const trendBox = document.createElement('div');
+        trendBox.style.cssText = 'background:#f9f9f9; border-radius:12px; padding:20px; margin-bottom:25px;';
+        
+        const trendTitle = document.createElement('div');
+        trendTitle.style.cssText = 'font-size:15px; font-weight:600; margin-bottom:15px; color:#2C2C2C;';
+        trendTitle.textContent = '📈 周度趋势';
+        trendBox.appendChild(trendTitle);
+        
+        monthData.weeklyStats.forEach((stat, idx) => {
+          const bar = document.createElement('div');
+          bar.style.cssText = 'margin-bottom:12px;';
+          
+          const label = document.createElement('div');
+          label.style.cssText = 'display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:#2C2C2C;';
+          label.innerHTML = `<span>第${idx + 1}周</span><span style="font-weight:600;">${stat.rate}%</span>`;
+          
+          const track = document.createElement('div');
+          track.style.cssText = 'height:10px; background:#e5e5e5; border-radius:5px; overflow:hidden;';
+          
+          const fill = document.createElement('div');
+          fill.style.cssText = `width:${stat.rate}%; height:100%; background:linear-gradient(90deg, #667eea, #764ba2);`;
+          
+          track.appendChild(fill);
+          bar.appendChild(label);
+          bar.appendChild(track);
+          trendBox.appendChild(bar);
+        });
+        
+        card.appendChild(trendBox);
+      }
+
+      // 时间分布
+      if (Object.keys(monthData.categoryDistribution).length > 0) {
+        const distBox = document.createElement('div');
+        distBox.style.cssText = 'background:#f9f9f9; border-radius:12px; padding:20px; margin-bottom:25px;';
+        
+        const distTitle = document.createElement('div');
+        distTitle.style.cssText = 'font-size:15px; font-weight:600; margin-bottom:15px; color:#2C2C2C;';
+        distTitle.textContent = '⏰ 时间分布';
+        distBox.appendChild(distTitle);
+        
+        Object.keys(monthData.categoryDistribution).forEach(key => {
+          const cat = appState.categories[key];
+          const hours = monthData.categoryDistribution[key];
+          const percent = monthData.totalDone > 0 ? Math.round((hours / monthData.totalDone) * 100) : 0;
+          
+          const row = document.createElement('div');
+          row.style.cssText = 'margin-bottom:12px;';
+          
+          const label = document.createElement('div');
+          label.style.cssText = 'display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:#2C2C2C;';
+          label.innerHTML = `<span>${cat.name}</span><span style="font-weight:600;">${hours}小时 (${percent}%)</span>`;
+          
+          const track = document.createElement('div');
+          track.style.cssText = 'height:8px; background:#e5e5e5; border-radius:4px; overflow:hidden;';
+          
+          const fill = document.createElement('div');
+          fill.style.cssText = `width:${percent}%; height:100%; background:${cat.color}; border-radius:4px;`;
+          
+          track.appendChild(fill);
+          row.appendChild(label);
+          row.appendChild(track);
+          distBox.appendChild(row);
+        });
+        
+        card.appendChild(distBox);
+      }
+
+      // 本月执行情况(按天显示,修复版)
+      const execBox = document.createElement('div');
+      execBox.style.cssText = 'background:#f9f9f9; border-radius:12px; padding:20px; margin-bottom:25px;';
+      
+      const execTitle = document.createElement('div');
+      execTitle.style.cssText = 'font-size:15px; font-weight:600; margin-bottom:15px; color:#2C2C2C;';
+      execTitle.textContent = '📅 本月执行情况';
+      execBox.appendChild(execTitle);
+      
+      // 获取本月天数
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const today = now.getDate();
+      
+      // 收集本月每天的数据
+      const dailyData = [];
+      
+      // 获取所有本月的周数据
+      const weekKeys = Object.keys(appState.weeklyData)
+        .filter(key => !key.includes('notes'))
+        .sort();
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayDate = new Date(year, month - 1, day);
+        const dayOfWeek = dayDate.getDay(); // 0=周日, 1=周一...
+        const actualDayOfWeek = (dayOfWeek === 0) ? 6 : dayOfWeek - 1; // 转换为0=周一
+        
+        let dayPlanned = 0;
+        let dayDone = 0;
+        let found = false;
+        
+        // 遍历所有周数据,找到包含这一天的周
+        for (const weekKey of weekKeys) {
+          const weekData = appState.weeklyData[weekKey];
+          if (!weekData || !weekData.plan) continue;
+          
+          const plan = weekData.plan;
+          const checkin = weekData.checkin || {};
+          
+          // 检查这一周的这一天是否有数据
+          if (plan[actualDayOfWeek]) {
+            // 计算这一天的知行合一率
+            for (let hour = 7; hour <= 23; hour++) {
+              if (plan[actualDayOfWeek][hour]) {
+                dayPlanned++;
+                const status = checkin[actualDayOfWeek]?.[hour];
+                if (status === 'done' || status?.reason) {
+                  dayDone++;
+                }
+              }
+            }
+            
+            if (dayPlanned > 0) {
+              found = true;
+              break; // 找到数据就停止
+            }
+          }
+        }
+        
+        const rate = dayPlanned > 0 ? Math.round((dayDone / dayPlanned) * 100) : 0;
+        dailyData.push({ day, rate, hasData: found && dayPlanned > 0 });
+      }
+      
+      // 创建日历网格
+      const calendar = document.createElement('div');
+      calendar.style.cssText = 'display:grid; grid-template-columns: repeat(7, 1fr); gap:6px;';
+      
+      // 星期标题
+      const weekDays = ['一', '二', '三', '四', '五', '六', '日'];
+      weekDays.forEach(day => {
+        const header = document.createElement('div');
+        header.style.cssText = 'text-align:center; font-size:11px; color:#999; padding:5px; font-weight:600;';
+        header.textContent = day;
+        calendar.appendChild(header);
+      });
+      
+      // 计算第一天是星期几(0=周日,需要转换)
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      const startOffset = (firstDay === 0) ? 6 : firstDay - 1; // 转换为0=周一
+      
+      // 填充空白格
+      for (let i = 0; i < startOffset; i++) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:10px; border-radius:8px;';
+        calendar.appendChild(empty);
+      }
+      
+      // 填充每一天
+      dailyData.forEach(data => {
+        const dayCell = document.createElement('div');
+        dayCell.style.cssText = 'text-align:center; padding:10px; border-radius:8px; font-size:12px; font-weight:600;';
+        
+        // 根据知行合一率设置颜色
+        let bgColor = '#f5f5f5';
+        let textColor = '#999';
+        
+        if (data.day > today) {
+          // 未到日期 - 灰色
+          bgColor = '#f5f5f5';
+          textColor = '#ccc';
+        } else if (!data.hasData) {
+          // 无数据 - 浅灰
+          bgColor = '#f5f5f5';
+          textColor = '#999';
+        } else if (data.rate >= 80) {
+          // 绿色
+          bgColor = '#4CAF50';
+          textColor = 'white';
+        } else if (data.rate >= 60) {
+          // 橙色
+          bgColor = '#FF9800';
+          textColor = 'white';
+        } else {
+          // 红色
+          bgColor = '#F44336';
+          textColor = 'white';
+        }
+        
+        dayCell.style.backgroundColor = bgColor;
+        dayCell.style.color = textColor;
+        dayCell.textContent = data.day;
+        
+        // 添加知行合一率提示(小字)
+        if (data.hasData && data.day <= today) {
+          const rateLabel = document.createElement('div');
+          rateLabel.style.cssText = 'font-size:9px; margin-top:2px; opacity:0.9;';
+          rateLabel.textContent = `${data.rate}%`;
+          dayCell.appendChild(rateLabel);
+        }
+        
+        calendar.appendChild(dayCell);
+      });
+      
+      execBox.appendChild(calendar);
+      
+      // 图例说明
+      const legend = document.createElement('div');
+      legend.style.cssText = 'margin-top:15px; display:flex; justify-content:center; gap:15px; font-size:11px;';
+      legend.innerHTML = `
+        <div style="display:flex; align-items:center; gap:5px;">
+          <div style="width:16px; height:16px; background:#4CAF50; border-radius:4px;"></div>
+          <span style="color:#666;">≥80%</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <div style="width:16px; height:16px; background:#FF9800; border-radius:4px;"></div>
+          <span style="color:#666;">60-79%</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <div style="width:16px; height:16px; background:#F44336; border-radius:4px;"></div>
+          <span style="color:#666;"><60%</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <div style="width:16px; height:16px; background:#f5f5f5; border:1px solid #ddd; border-radius:4px;"></div>
+          <span style="color:#666;">未到</span>
+        </div>
+      `;
+      execBox.appendChild(legend);
+      
+      card.appendChild(execBox);
+
+      // 底部水印
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; color:#999; margin-top:25px; padding-top:20px; border-top:1px solid #e5e5e5;';
+      watermark.textContent = `${appState.userName}的人生剧本 · 每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 8. 分享月度AI洞察
+    async function shareMonthAIInsight() {
+      const aiResult = document.getElementById('monthAIResult').textContent;
+      if (!aiResult || aiResult.includes('功能开发中') || aiResult.trim() === '') {
+        alert('请先进行月度AI分析');
+        return;
+      }
+      
+      const card = createMonthAIShareCard();
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        logging: false,
+        backgroundColor: '#667eea'
+      });
+      
+      document.body.removeChild(card);
+      downloadCanvas(canvas, '月度AI洞察');
+    }
+
+    // 创建月度AI洞察分享卡片
+    function createMonthAIShareCard() {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:40px; color:white; font-family: "Noto Sans SC", sans-serif;';
+
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:28px; font-weight:700; margin-bottom:15px; font-family: "Noto Serif SC", serif;';
+      title.textContent = `${appState.userName} 的月度洞察`;
+      card.appendChild(title);
+
+      const monthInfo = document.createElement('div');
+      monthInfo.style.cssText = 'font-size:14px; opacity:0.9; margin-bottom:25px;';
+      const now = new Date();
+      monthInfo.textContent = `${now.getFullYear()}年 ${now.getMonth() + 1}月`;
+      card.appendChild(monthInfo);
+
+      const content = document.createElement('div');
+      content.style.cssText = 'background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); padding:25px; border-radius:12px; font-size:13px; line-height:1.8;';
+      
+      // 优化AI文本格式 - 和周度一致
+      let aiText = document.getElementById('monthAIResult').textContent;
+      
+      // 清理和格式化文本
+      aiText = aiText
+        .replace(/###\s*/g, '')
+        .replace(/##\s*/g, '')
+        .replace(/#\s*/g, '')
+        .replace(/\*\*\*/g, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/^[\s\n]+/, '')
+        .replace(/[\s\n]+$/, '');
+      
+      // 按行处理,添加【】标记(建议类除外)
+      const lines = aiText.split('\n').filter(line => line.trim().length > 0);
+      let formattedHTML = '';
+      
+      lines.forEach((line, idx) => {
+        line = line.trim();
+        
+        // 检测重点(以数字或中文数字开头的标题)
+        const pointMatch = line.match(/^([一二三四五1-9])[\s、\.．：:]\s*(.+)/);
+        if (pointMatch) {
+          const title = pointMatch[2];
+          // 判断是否是建议类标题
+          if (title.includes('改进建议') || title.includes('下月') || title.includes('建议') || title.includes('优化')) {
+            // 建议类 - 只加粗,不加【】
+            if (idx > 0) formattedHTML += '<div style="height:15px;"></div>';
+            formattedHTML += `<div style="font-weight:600; margin-bottom:8px;">${title}</div>`;
+          } else {
+            // 其他重点 - 加【】
+            if (idx > 0) formattedHTML += '<div style="height:15px;"></div>';
+            formattedHTML += `<div style="font-weight:600; margin-bottom:8px;">【${title}】</div>`;
+          }
+        }
+        // 列表项
+        else if (line.startsWith('-')) {
+          formattedHTML += `<div style="margin:6px 0 6px 15px;">${line}</div>`;
+        }
+        // 普通段落
+        else {
+          formattedHTML += `<div style="margin:8px 0;">${line}</div>`;
+        }
+      });
+      
+      content.innerHTML = formattedHTML;
+      card.appendChild(content);
+
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; opacity:0.7; margin-top:25px;';
+      watermark.innerHTML = `${appState.userName}的人生剧本<br>每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 9. 分享月度趋势卡片
+    async function shareMonthTrendCard() {
+      const card = createMonthTrendCard();
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      document.body.removeChild(card);
+      downloadCanvas(canvas, '月度趋势');
+    }
+
+    // 创建月度趋势卡片(只包含趋势进度条)
+    function createMonthTrendCard() {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:white; padding:40px; font-family: "Noto Sans SC", sans-serif;';
+
+      const header = document.createElement('div');
+      header.style.cssText = 'margin-bottom:30px;';
+      
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:24px; font-weight:700; color:#2C2C2C; margin-bottom:10px;';
+      title.textContent = '📈 月度趋势';
+      header.appendChild(title);
+      
+      const subtitle = document.createElement('div');
+      subtitle.style.cssText = 'font-size:14px; color:#8B8B8B;';
+      const now = new Date();
+      subtitle.textContent = `${appState.userName} · ${now.getFullYear()}年${now.getMonth() + 1}月`;
+      header.appendChild(subtitle);
+      
+      card.appendChild(header);
+
+      const monthData = getMonthData();
+
+      // 月度统计卡片
+      const statsCard = document.createElement('div');
+      statsCard.style.cssText = 'background:#f9f9f9; border-radius:12px; padding:25px; margin-bottom:25px; text-align:center;';
+      statsCard.innerHTML = `
+        <div style="font-size:48px; font-weight:700; color:#2C2C2C; margin-bottom:10px;">${monthData.completionRate}%</div>
+        <div style="font-size:14px; color:#8B8B8B;">月度知行合一率</div>
+      `;
+      card.appendChild(statsCard);
+
+      // 周度趋势
+      if (monthData.weeklyStats.length > 0) {
+        const trendBox = document.createElement('div');
+        trendBox.style.cssText = 'background:#f9f9f9; border-radius:12px; padding:20px;';
+        
+        const trendTitle = document.createElement('div');
+        trendTitle.style.cssText = 'font-size:15px; font-weight:600; margin-bottom:15px; color:#2C2C2C;';
+        trendTitle.textContent = '📊 周度变化';
+        trendBox.appendChild(trendTitle);
+        
+        monthData.weeklyStats.forEach((stat, idx) => {
+          const bar = document.createElement('div');
+          bar.style.cssText = 'margin-bottom:15px;';
+          
+          const label = document.createElement('div');
+          label.style.cssText = 'display:flex; justify-content:space-between; font-size:14px; margin-bottom:8px; color:#2C2C2C;';
+          label.innerHTML = `<span style="font-weight:600;">第${idx + 1}周</span><span style="font-weight:700; color:#667eea;">${stat.rate}%</span>`;
+          
+          const track = document.createElement('div');
+          track.style.cssText = 'height:12px; background:#e5e5e5; border-radius:6px; overflow:hidden;';
+          
+          const fill = document.createElement('div');
+          fill.style.cssText = `width:${stat.rate}%; height:100%; background:linear-gradient(90deg, #667eea, #764ba2); transition:width 0.3s;`;
+          
+          track.appendChild(fill);
+          bar.appendChild(label);
+          bar.appendChild(track);
+          trendBox.appendChild(bar);
+        });
+        
+        card.appendChild(trendBox);
+      }
+
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; color:#999; margin-top:25px; padding-top:20px; border-top:1px solid #e5e5e5;';
+      watermark.textContent = `${appState.userName}的人生剧本 · 每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 10. 分享月度数据总结卡片
+    async function shareMonthSummaryCard() {
+      const card = createMonthSummaryCard();
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      document.body.removeChild(card);
+      downloadCanvas(canvas, '月度总结');
+    }
+
+    // 创建月度数据总结卡片(简洁版,只包含关键数据)
+    function createMonthSummaryCard() {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:white; padding:40px; font-family: "Noto Sans SC", sans-serif;';
+
+      const header = document.createElement('div');
+      header.style.cssText = 'margin-bottom:30px; text-align:center;';
+      
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:28px; font-weight:700; color:#2C2C2C; margin-bottom:10px;';
+      const now = new Date();
+      title.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月总结`;
+      header.appendChild(title);
+      
+      const subtitle = document.createElement('div');
+      subtitle.style.cssText = 'font-size:14px; color:#8B8B8B;';
+      subtitle.textContent = appState.userName;
+      header.appendChild(subtitle);
+      
+      card.appendChild(header);
+
+      const monthData = getMonthData();
+
+      // 关键数据 - 2x2网格
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:25px;';
+      
+      grid.innerHTML = `
+        <div style="background:#f9f9f9; border-radius:12px; padding:20px; text-align:center;">
+          <div style="font-size:36px; font-weight:700; color:#667eea; margin-bottom:8px;">${monthData.completionRate}%</div>
+          <div style="font-size:12px; color:#8B8B8B;">知行合一率</div>
+        </div>
+        <div style="background:#f9f9f9; border-radius:12px; padding:20px; text-align:center;">
+          <div style="font-size:36px; font-weight:700; color:#764ba2; margin-bottom:8px;">${monthData.weeklyStats.length}</div>
+          <div style="font-size:12px; color:#8B8B8B;">已记录周数</div>
+        </div>
+        <div style="background:#f9f9f9; border-radius:12px; padding:20px; text-align:center;">
+          <div style="font-size:36px; font-weight:700; color:#4CAF50; margin-bottom:8px;">${monthData.totalDone}</div>
+          <div style="font-size:12px; color:#8B8B8B;">完成时段</div>
+        </div>
+        <div style="background:#f9f9f9; border-radius:12px; padding:20px; text-align:center;">
+          <div style="font-size:36px; font-weight:700; color:#FF9800; margin-bottom:8px;">${monthData.totalPlanned}</div>
+          <div style="font-size:12px; color:#8B8B8B;">计划时段</div>
+        </div>
+      `;
+      card.appendChild(grid);
+
+      // 最佳表现周
+      if (monthData.weeklyStats.length > 0) {
+        const bestWeek = monthData.weeklyStats.reduce((best, curr, idx) => 
+          curr.rate > best.rate ? {rate: curr.rate, week: idx + 1} : best,
+          {rate: 0, week: 0}
+        );
+        
+        const highlight = document.createElement('div');
+        highlight.style.cssText = 'background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:12px; padding:20px; text-align:center; color:white;';
+        highlight.innerHTML = `
+          <div style="font-size:14px; opacity:0.9; margin-bottom:8px;">🏆 最佳表现</div>
+          <div style="font-size:20px; font-weight:600;">第${bestWeek.week}周 · ${bestWeek.rate}%</div>
+        `;
+        card.appendChild(highlight);
+      }
+
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; color:#999; margin-top:25px; padding-top:20px; border-top:1px solid #e5e5e5;';
+      watermark.textContent = `${appState.userName}的人生剧本 · 每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 捕获周表格
+    async function captureWeekTable(type) {
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed; top:-10000px; left:0; background:white; padding:30px; border-radius:20px; font-family: "Noto Sans SC", sans-serif;';
+      
+      // 标题
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:24px; font-weight:700; margin-bottom:10px; font-family: "Noto Serif SC", serif;';
+      title.textContent = `${appState.userName} 的人生剧本`;
+      container.appendChild(title);
+
+      // 周信息
+      const weekInfo = document.createElement('div');
+      weekInfo.style.cssText = 'font-size:13px; color:#999; margin-bottom:20px;';
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const beijingTime = new Date(utc + (3600000 * 8));
+      const weekNum = getWeekNumber(beijingTime);
+      weekInfo.textContent = `2026年 第${weekNum}周`;
+      container.appendChild(weekInfo);
+
+      // 表格
+      const table = document.createElement('div');
+      table.style.cssText = 'display:grid; grid-template-columns:50px repeat(7,60px); gap:4px;';
+
+      // 表头
+      const days = ['', '一', '二', '三', '四', '五', '六', '日'];
+      days.forEach((d, i) => {
+        const th = document.createElement('div');
+        th.style.cssText = 'text-align:center; font-size:12px; font-weight:600; padding:8px; background:#f5f5f5; border-radius:8px;';
+        if (i > 0 && i - 1 === appState.currentDay) {
+          th.style.background = '#333';
+          th.style.color = 'white';
+        }
+        th.textContent = d;
+        table.appendChild(th);
+      });
+
+      // 时间行
+      for (let hour = 7; hour <= 23; hour++) {
+        // 时间标签
+        const timeCell = document.createElement('div');
+        timeCell.style.cssText = 'text-align:center; font-size:10px; color:#999; padding:8px 0; font-family:monospace;';
+        timeCell.textContent = `${hour}:00`;
+        table.appendChild(timeCell);
+
+        // 每天的格子
+        for (let day = 0; day < 7; day++) {
+          const cell = document.createElement('div');
+          cell.style.cssText = 'min-height:35px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:10px; padding:4px;';
+
+          const task = appState.weekPlan[day]?.[hour];
+          const checkin = appState.weekCheckin[day]?.[hour];
+
+          if (type === 'plan') {
+            // 周计划模式 - 显示计划内容
+            if (task) {
+              const cat = appState.categories[task.category];
+              cell.style.background = cat.color;
+              cell.textContent = task.tag;
+              cell.style.fontWeight = '500';
+            } else {
+              cell.style.background = '#fafafa';
+              cell.style.border = '1px solid #eee';
+            }
+          } else {
+            // 执行情况模式 - 显示打卡状态
+            if (task) {
+              if (checkin === 'done') {
+                cell.style.background = '#95D7AE';
+                cell.textContent = '✓';
+                cell.style.fontSize = '16px';
+              } else if (checkin?.status === 'undone') {
+                cell.style.background = '#F4A7A7';
+                cell.textContent = '✗';
+                cell.style.fontSize = '16px';
+              } else {
+                const cat = appState.categories[task.category];
+                cell.style.background = cat.color;
+                cell.style.opacity = '0.3';
+                cell.textContent = task.tag;
+              }
+            } else {
+              cell.style.background = '#fafafa';
+              cell.style.border = '1px solid #eee';
+            }
+          }
+
+          // 高亮今天
+          if (day === appState.currentDay && task) {
+            cell.style.border = '2px solid #333';
+          }
+
+          table.appendChild(cell);
+        }
+      }
+
+      container.appendChild(table);
+
+      // 底部水印
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; color:#999; margin-top:20px;';
+      watermark.innerHTML = `${appState.userName}的人生剧本<br>每一天都要精彩地活`;
+      container.appendChild(watermark);
+
+      document.body.appendChild(container);
+
+      const canvas = await html2canvas(container, {
+        backgroundColor: 'white',
+        scale: 2,
+        logging: false
+      });
+
+      document.body.removeChild(container);
+      return canvas;
+    }
+
+    // 创建AI洞察分享卡片
+    function createAIShareCard() {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:40px; color:white; font-family: "Noto Sans SC", sans-serif;';
+
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:28px; font-weight:700; margin-bottom:15px; font-family: "Noto Serif SC", serif;';
+      title.textContent = `${appState.userName} 的人生洞察`;
+      card.appendChild(title);
+
+      const weekInfo = document.createElement('div');
+      weekInfo.style.cssText = 'font-size:14px; opacity:0.9; margin-bottom:25px;';
+      const now = new Date();
+      const weekNum = getWeekNumber(now);
+      weekInfo.textContent = `2026年 第${weekNum}周`;
+      card.appendChild(weekInfo);
+
+      const content = document.createElement('div');
+      content.style.cssText = 'background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); border-radius:12px; padding:25px; font-size:13px; line-height:1.8;';
+      
+      // 从aiResult的innerHTML获取,已经包含格式化
+      let aiHTML = document.getElementById('aiResult').innerHTML;
+      
+      // 移除标题
+      aiHTML = aiHTML.replace(/<div[^>]*>🎬 导演视角 · AI 洞察<\/div>/g, '');
+      
+      content.innerHTML = aiHTML;
+      card.appendChild(content);
+
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; opacity:0.7; margin-top:25px;';
+      watermark.innerHTML = `${appState.userName}的人生剧本<br>每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 创建统计数据卡片
+    function createStatShareCard() {
+      const card = document.createElement('div');
+      card.style.cssText = 'position:fixed; top:-10000px; left:0; width:600px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:40px; color:white; font-family: "Noto Sans SC", sans-serif;';
+
+      const title = document.createElement('div');
+      title.style.cssText = 'font-size:28px; font-weight:700; margin-bottom:20px; font-family: "Noto Serif SC", serif;';
+      title.textContent = `${appState.userName} 的人生剧本`;
+      card.appendChild(title);
+
+      const weekInfo = document.createElement('div');
+      weekInfo.style.cssText = 'font-size:14px; opacity:0.9; margin-bottom:30px;';
+      const now = new Date();
+      const weekNum = getWeekNumber(now);
+      weekInfo.textContent = `2026年 第${weekNum}周`;
+      card.appendChild(weekInfo);
+
+      const analysisData = buildDetailedAnalysisData();
+
+      const statsBox = document.createElement('div');
+      statsBox.style.cssText = 'background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); border-radius:16px; padding:25px;';
+
+      const stats = document.createElement('div');
+      stats.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;';
+      stats.innerHTML = `
+        <div style="text-align:center;">
+          <div style="font-size:42px; font-weight:700;">${analysisData.completionRate}%</div>
+          <div style="font-size:13px; opacity:0.8; margin-top:5px;">知行合一率</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:42px; font-weight:700;">${analysisData.totalDone}/${analysisData.totalPlanned}</div>
+          <div style="font-size:13px; opacity:0.8; margin-top:5px;">完成时段</div>
+        </div>
+      `;
+      statsBox.appendChild(stats);
+
+      const dist = document.createElement('div');
+      dist.style.cssText = 'font-size:13px; line-height:1.8; border-top:1px solid rgba(255,255,255,0.2); padding-top:15px;';
+      let distHTML = '';
+      Object.keys(analysisData.actualDistribution).forEach(key => {
+        const cat = appState.categories[key];
+        const hours = analysisData.actualDistribution[key];
+        const percent = analysisData.actualTotal > 0 ? Math.round(hours/analysisData.actualTotal*100) : 0;
+        distHTML += `
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <span>${cat.name}</span>
+            <span>${hours}h (${percent}%)</span>
+          </div>`;
+      });
+      dist.innerHTML = distHTML;
+      statsBox.appendChild(dist);
+
+      card.appendChild(statsBox);
+
+      const watermark = document.createElement('div');
+      watermark.style.cssText = 'text-align:center; font-size:11px; opacity:0.6; margin-top:30px;';
+      watermark.innerHTML = `${appState.userName}的人生剧本<br>每一天都要精彩地活`;
+      card.appendChild(watermark);
+
+      document.body.appendChild(card);
+      return card;
+    }
+
+    // 下载canvas
+    async function downloadCanvas(canvas, name) {
+      try {
+        // 转换为blob
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        
+        // 尝试使用原生分享API
+        if (navigator.share && navigator.canShare) {
+          const file = new File([blob], `${name}.png`, { type: 'image/png' });
+          
+          // 检查是否支持分享文件
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `${appState.userName}的人生剧本`,
+              text: `${name} - 每一天都要精彩地活`
+            });
+            return; // 分享成功,直接返回
+          }
+        }
+        
+        // 降级方案:下载图片
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const now = new Date();
+        const weekNum = getWeekNumber(now);
+        a.download = `${name}_${appState.userName}_第${weekNum}周.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+      } catch(error) {
+        // 用户取消分享或其他错误
+        if (error.name !== 'AbortError') {
+          console.error('分享失败:', error);
+          alert('分享失败,图片已保存到下载文件夹');
+        }
+      }
+    }
+
+    // 旧的分享函数(保留兼容)
+    function generateShareImage() {
+      shareStatCard();
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.remove('show');
+    }
+
+    async function downloadShareImage() {
+      const card = document.getElementById('shareCard');
+      
+      try {
+        const canvas = await html2canvas(card, {
+          backgroundColor: null,
+          scale: 2,
+          logging: false,
+          useCORS: true
+        });
+        
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `人生剧本_${appState.userName}_第${getWeekNumber(new Date())}周.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          alert('✅ 分享卡片已保存!');
+        });
+      } catch (error) {
+        console.error('生成图片失败:', error);
+        alert('生成图片失败,请重试');
+      }
+    }
+
+    // ========== 分类配置 ==========
+    function renderCategoryConfig() {
+      const container = document.getElementById('categoryConfig');
+      container.innerHTML = '';
+
+      Object.keys(appState.categories).forEach(key => {
+        const cat = appState.categories[key];
+        
+        const item = document.createElement('div');
+        item.style.marginBottom = '20px';
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <input type="color" class="color-picker" value="${cat.color}" onchange="updateCategoryColor('${key}', this.value)">
+            <input type="text" class="category-name-input" value="${cat.name}" onchange="updateCategoryName('${key}', this.value)">
+          </div>
+        `;
+
+        const tagList = document.createElement('div');
+        tagList.className = 'tag-list';
+        
+        cat.tags.forEach(tag => {
+          const tagItem = document.createElement('div');
+          tagItem.className = 'tag-item';
+          tagItem.innerHTML = `
+            <span>${tag}</span>
+            <span class="tag-remove" onclick="removeTag('${key}', '${tag}')">×</span>
+          `;
+          tagList.appendChild(tagItem);
+        });
+
+        // 添加输入框和按钮
+        const addContainer = document.createElement('div');
+        addContainer.style.cssText = 'display:flex; gap:8px; align-items:center;';
+        
+        const addInput = document.createElement('input');
+        addInput.className = 'add-tag-input';
+        addInput.placeholder = '输入新标签';
+        addInput.id = `add-tag-${key}`;
+        addInput.style.flex = '1';
+        
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn btn-secondary';
+        addBtn.textContent = '添加';
+        addBtn.style.cssText = 'padding:6px 12px; font-size:12px; white-space:nowrap;';
+        addBtn.onclick = () => {
+          const input = document.getElementById(`add-tag-${key}`);
+          if (input.value.trim()) {
+            addTag(key, input.value.trim());
+            input.value = '';
+          }
+        };
+        
+        addContainer.appendChild(addInput);
+        addContainer.appendChild(addBtn);
+        tagList.appendChild(addContainer);
+
+        item.appendChild(tagList);
+        container.appendChild(item);
+      });
+    }
+
+    function updateCategoryColor(key, color) {
+      appState.categories[key].color = color;
+      saveData();
+      renderCategorySelector();
+      renderWeekTable();
+      renderCheckinList();
+    }
+
+    function updateCategoryName(key, name) {
+      appState.categories[key].name = name;
+      saveData();
+      renderCategorySelector();
+    }
+
+    function addTag(key, tag) {
+      if (!appState.categories[key].tags.includes(tag)) {
+        appState.categories[key].tags.push(tag);
+        saveData();
+        renderCategoryConfig();
+        renderTagSelector();
+        
+        // 如果当前选择的是这个分类,刷新标签选择器
+        if (appState.selectedCategory === key) {
+          renderTagSelector();
+        }
+      }
+    }
+
+    function removeTag(key, tag) {
+      appState.categories[key].tags = appState.categories[key].tags.filter(t => t !== tag);
+      saveData();
+      renderCategoryConfig();
+      
+      // 如果当前选中的标签被删除,清空选择
+      if (appState.selectedTag === tag) {
+        appState.selectedTag = null;
+      }
+      renderTagSelector();
+    }
+
+    // ========== 视图切换 ==========
+    let currentReviewView = 'week';
+    
+    function switchReviewView(view) {
+      currentReviewView = view;
+      
+      if (view === 'week') {
+        document.getElementById('weekView').style.display = 'block';
+        document.getElementById('monthView').style.display = 'none';
+        document.getElementById('viewWeekBtn').classList.add('btn-primary');
+        document.getElementById('viewWeekBtn').classList.remove('btn-secondary');
+        document.getElementById('viewMonthBtn').classList.remove('btn-primary');
+        document.getElementById('viewMonthBtn').classList.add('btn-secondary');
+        
+        renderReviewPage();
+      } else {
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('monthView').style.display = 'block';
+        document.getElementById('viewMonthBtn').classList.add('btn-primary');
+        document.getElementById('viewMonthBtn').classList.remove('btn-secondary');
+        document.getElementById('viewWeekBtn').classList.remove('btn-primary');
+        document.getElementById('viewWeekBtn').classList.add('btn-secondary');
+        
+        renderMonthView();
+      }
+    }
+    
+    // ========== 月度视图渲染 ==========
+    function renderMonthView() {
+      const monthData = getMonthData();
+      
+      // 渲染月度统计
+      document.getElementById('monthCompletion').textContent = `${monthData.completionRate}%`;
+      document.getElementById('monthTotal').textContent = `${monthData.totalDone}/${monthData.totalPlanned}`;
+      
+      // 渲染周度趋势
+      renderWeekTrend(monthData.weeklyStats);
+      
+      // 渲染时间分布饼图
+      renderMonthPieChart(monthData.categoryDistribution);
+      
+      // 加载月度复盘笔记
+      loadMonthNotes();
+    }
+    
+    // 获取本月数据
+    function getMonthData() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      
+      let totalPlanned = 0;
+      let totalDone = 0;
+      const weeklyStats = [];
+      const categoryDistribution = {};
+      
+      // 遍历本月的所有周数据
+      Object.keys(appState.weeklyData).forEach(weekKey => {
+        // 检查是否是本月的周(简化版,实际可以更精确)
+        if (weekKey.startsWith(`${year}-`)) {
+          const weekData = appState.weeklyData[weekKey];
+          const plan = weekData.plan || {};
+          const checkin = weekData.checkin || {};
+          
+          let weekPlanned = 0;
+          let weekDone = 0;
+          
+          for (let day = 0; day < 7; day++) {
+            for (let hour = 7; hour <= 23; hour++) {
+              const task = plan[day]?.[hour];
+              if (!task) continue;
+              
+              weekPlanned++;
+              const checkinStatus = checkin[day]?.[hour];
+              
+              if (checkinStatus === 'done') {
+                weekDone++;
+                const cat = task.category;
+                categoryDistribution[cat] = (categoryDistribution[cat] || 0) + 1;
+              } else if (checkinStatus?.reason) {
+                const cat = checkinStatus.reason.category;
+                categoryDistribution[cat] = (categoryDistribution[cat] || 0) + 1;
+              }
+            }
+          }
+          
+          totalPlanned += weekPlanned;
+          totalDone += weekDone;
+          
+          weeklyStats.push({
+            week: weekKey,
+            rate: weekPlanned > 0 ? Math.round((weekDone / weekPlanned) * 100) : 0
+          });
+        }
+      });
+      
+      return {
+        totalPlanned,
+        totalDone,
+        completionRate: totalPlanned > 0 ? Math.round((totalDone / totalPlanned) * 100) : 0,
+        weeklyStats,
+        categoryDistribution
+      };
+    }
+    
+    // 渲染周度趋势(简化版文字列表)
+    function renderWeekTrend(weeklyStats) {
+      const container = document.getElementById('weekTrend');
+      container.innerHTML = '';
+      
+      if (weeklyStats.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#999;">暂无数据</div>';
+        return;
+      }
+      
+      weeklyStats.forEach((stat, idx) => {
+        const bar = document.createElement('div');
+        bar.style.cssText = 'margin-bottom:15px;';
+        
+        const label = document.createElement('div');
+        label.style.cssText = 'display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;';
+        label.innerHTML = `<span>第${idx + 1}周 (${stat.week})</span><span>${stat.rate}%</span>`;
+        
+        const track = document.createElement('div');
+        track.style.cssText = 'height:24px; background:#f5f5f5; border-radius:12px; overflow:hidden;';
+        
+        const fill = document.createElement('div');
+        fill.style.cssText = `width:${stat.rate}%; height:100%; background:linear-gradient(90deg, #667eea, #764ba2); transition:width 0.6s;`;
+        
+        track.appendChild(fill);
+        bar.appendChild(label);
+        bar.appendChild(track);
+        container.appendChild(bar);
+      });
+    }
+    
+    // 渲染时间分布饼图(Canvas)
+    function renderMonthPieChart(distribution) {
+      const canvas = document.getElementById('monthPieChart');
+      const ctx = canvas.getContext('2d');
+      const centerX = 150;
+      const centerY = 150;
+      const radius = 100;
+      
+      // 清空画布
+      ctx.clearRect(0, 0, 300, 300);
+      
+      const total = Object.values(distribution).reduce((a, b) => a + b, 0);
+      if (total === 0) {
+        ctx.fillStyle = '#999';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('暂无数据', centerX, centerY);
+        return;
+      }
+      
+      let currentAngle = -Math.PI / 2; // 从12点钟方向开始
+      
+      Object.keys(distribution).forEach(key => {
+        const cat = appState.categories[key];
+        const value = distribution[key];
+        const angle = (value / total) * 2 * Math.PI;
+        
+        // 绘制扇形
+        ctx.fillStyle = cat.color;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 不绘制边框,避免缝隙
+        
+        currentAngle += angle;
+      });
+      
+      // 渲染图例
+      const listContainer = document.getElementById('monthCategoryList');
+      listContainer.innerHTML = '';
+      listContainer.style.cssText = 'margin-top:20px;';
+      
+      Object.keys(distribution).forEach(key => {
+        const cat = appState.categories[key];
+        const value = distribution[key];
+        const percent = Math.round((value / total) * 100);
+        
+        const item = document.createElement('div');
+        item.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; margin-bottom:8px; background:#f9f9f9; border-radius:8px;';
+        item.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:16px; height:16px; background:${cat.color}; border-radius:4px;"></div>
+            <span>${cat.name}</span>
+          </div>
+          <span style="font-weight:600;">${value}h (${percent}%)</span>
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+    
+    // 加载月度笔记
+    function loadMonthNotes() {
+      const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+      const monthNotes = appState.weeklyData[`${monthKey}-notes`] || {};
+      
+      document.getElementById('monthAchievement').value = monthNotes.achievement || '';
+      document.getElementById('monthChallenge').value = monthNotes.challenge || '';
+      document.getElementById('monthGoals').value = monthNotes.goals || '';
+      
+      // 绑定保存事件
+      ['monthAchievement', 'monthChallenge', 'monthGoals'].forEach(id => {
+        const el = document.getElementById(id);
+        el.onblur = () => {
+          const key = id.replace('month', '').toLowerCase();
+          if (!appState.weeklyData[`${monthKey}-notes`]) {
+            appState.weeklyData[`${monthKey}-notes`] = {};
+          }
+          appState.weeklyData[`${monthKey}-notes`][key] = el.value;
+          saveData();
+        };
+      });
+    }
+    
+    // 月度AI分析
+    async function analyzeMonth() {
+      const apiKey = appState.apiKey || document.getElementById('apiKey').value;
+      if (!apiKey) {
+        alert('请先在工具页配置API Key');
+        return;
+      }
+
+      const monthData = getMonthData();
+      
+      if (monthData.totalPlanned === 0) {
+        alert('本月暂无数据,请先完成本周计划和打卡');
+        return;
+      }
+
+      const btn = document.getElementById('monthAiBtn');
+      const btnText = document.getElementById('monthAiBtnText');
+      const result = document.getElementById('monthAIResult');
+
+      btn.disabled = true;
+      btnText.textContent = '⏳ AI 正在深度分析...';
+      result.classList.remove('show');
+
+      try {
+        const prompt = buildMonthAnalysisPrompt(monthData);
+        const provider = appState.apiProvider || 'zhipu';
+        
+        console.log('月度AI分析 - 提供商:', provider);
+        console.log('月度AI分析 - 提示词长度:', prompt.length);
+        
+        let response;
+        
+        if (provider === 'deepseek') {
+          console.log('月度AI分析 - 使用DeepSeek API');
+          response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: 'deepseek-chat',
+              messages: [
+                {
+                  role: 'system',
+                  content: '你是一位资深的个人成长教练,擅长从长期趋势角度分析用户的时间管理数据。'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.7,
+              max_tokens: 2000
+            })
+          });
+        } else {
+          // 智谱API
+          console.log('月度AI分析 - 使用智谱 API');
+          response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: 'glm-4',
+              messages: [
+                {
+                  role: 'system',
+                  content: '你是一位资深的个人成长教练,擅长从长期趋势角度分析用户的时间管理数据。'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.7
+            })
+          });
+        }
+
+        console.log('月度AI分析 - 响应状态:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('月度AI分析 - API错误:', errorText);
+          throw new Error(`API错误 (${response.status})`);
+        }
+
+        const data = await response.json();
+        console.log('月度AI分析 - 成功获取响应');
+        
+        // 增强文本清理 - 去除所有Markdown格式
+        let analysis = data.choices[0].message.content
+          .replace(/###\s*/g, '')        // 去除 ###
+          .replace(/##\s*/g, '')         // 去除 ##
+          .replace(/#\s*/g, '')          // 去除 #
+          .replace(/\*\*\*/g, '')        // 去除 ***
+          .replace(/\*\*/g, '')          // 去除 **
+          .replace(/\*/g, '')            // 去除 *
+          .replace(/【/g, '\n\n【')      // 【前换行
+          .replace(/】/g, '】\n')         // 】后换行
+          .replace(/(\d+)\.\s*/g, '\n\n$1. ') // 数字列表前换行
+          .replace(/。\s*(\d+\.)/g, '。\n\n$1') // 句号后数字前换行
+          .replace(/^[\s\n]+/, '')       // 去除开头空白
+          .replace(/[\s\n]+$/, '')       // 去除结尾空白
+          .replace(/\n{3,}/g, '\n\n');   // 最多2个换行
+
+        result.textContent = analysis;
+        result.classList.add('show');
+        btnText.textContent = '✅ 分析完成';
+        
+        setTimeout(() => {
+          btnText.textContent = '✨ AI 分析本月数据';
+          btn.disabled = false;
+        }, 2000);
+
+      } catch (error) {
+        console.error('月度AI分析失败:', error);
+        
+        let errorMsg = `分析失败: ${error.message}\n\n`;
+        errorMsg += '请检查:\n1. API Key是否正确\n2. 网络连接是否正常\n3. API额度是否充足';
+        
+        result.textContent = errorMsg;
+        result.classList.add('show');
+        btnText.textContent = '✨ AI 分析本月数据';
+        btn.disabled = false;
+      }
+    }
+
+    // 构建月度分析提示词
+    function buildMonthAnalysisPrompt(monthData) {
+      const now = new Date();
+      const monthName = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+      
+      let prompt = `你是一位资深的个人成长教练,请根据以下月度数据进行深度分析:\n\n`;
+      prompt += `【基本信息】\n`;
+      prompt += `时间范围: ${monthName}\n`;
+      prompt += `已记录周数: ${monthData.weeklyStats.length}周\n`;
+      prompt += `月度知行合一率: ${monthData.completionRate}%\n`;
+      prompt += `完成/计划: ${monthData.totalDone}/${monthData.totalPlanned}时段\n\n`;
+      
+      if (monthData.weeklyStats.length > 0) {
+        prompt += `【周度趋势】\n`;
+        monthData.weeklyStats.forEach((stat, idx) => {
+          prompt += `第${idx + 1}周: ${stat.rate}%\n`;
+        });
+        prompt += `\n`;
+      }
+      
+      if (Object.keys(monthData.categoryDistribution).length > 0) {
+        prompt += `【时间分配】\n`;
+        Object.keys(monthData.categoryDistribution).forEach(key => {
+          const cat = appState.categories[key];
+          const hours = monthData.categoryDistribution[key];
+          const percent = monthData.totalDone > 0 ? Math.round((hours / monthData.totalDone) * 100) : 0;
+          prompt += `${cat.name}: ${hours}小时 (${percent}%)\n`;
+        });
+      }
+      
+      prompt += `\n【分析要求】\n`;
+      prompt += `1. 识别趋势: 分析周度知行合一率的变化趋势\n`;
+      prompt += `2. 发现规律: 找出时间分配的特点和模式\n`;
+      prompt += `3. 提供建议: 给出3条具体可行的改进建议\n`;
+      prompt += `4. 下月目标: 建议下月重点优化的方向\n\n`;
+      prompt += `请用简洁的语言,分条作答,每条建议要具体且可操作。`;
+      
+      return prompt;
+    }
+
+    // ========== 引导页功能 ==========
+    let currentSlide = 0;
+    const totalSlides = 4;
+
+    function goToSlide(index) {
+      if (index < 0 || index >= totalSlides) return;
+      
+      // 隐藏当前页
+      const slides = document.querySelectorAll('.intro-slide');
+      slides[currentSlide].style.display = 'none';
+      
+      // 显示目标页
+      currentSlide = index;
+      slides[currentSlide].style.display = 'block';
+      
+      // 更新导航点
+      const dots = document.querySelectorAll('.intro-dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentSlide);
+      });
+      
+      // 更新按钮文字
+      const nextBtn = document.getElementById('nextBtn');
+      if (currentSlide === totalSlides - 1) {
+        nextBtn.style.display = 'none';
+      } else {
+        nextBtn.style.display = 'block';
+        nextBtn.textContent = '下一页';
+      }
+    }
+
+    function nextSlide() {
+      goToSlide(currentSlide + 1);
+    }
+
+    function startApp() {
+      // 弹窗询问姓名
+      const userName = prompt('🎬 请输入您的姓名,开启专属人生剧本:', appState.userName);
+      if (userName && userName.trim()) {
+        appState.userName = userName.trim();
+        document.getElementById('userNameDisplay').textContent = appState.userName;
+        saveData();
+      }
+      
+      document.getElementById('intro-layer').classList.add('hide');
+      
+      // 设置首次使用标记
+      localStorage.setItem('lifeScriptFirstUse', 'false');
+    }
+
+    // 检查是否首次使用
+    function checkFirstUse() {
+      const firstUse = localStorage.getItem('lifeScriptFirstUse');
+      if (firstUse === 'false') {
+        // 不是首次使用,直接跳过引导
+        document.getElementById('intro-layer').style.display = 'none';
+      }
+    }
+
+    // ========== 页面切换 ==========
+    function switchPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(`page-${page}`).classList.add('active');
+
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      if (page === 'review') {
+        renderReviewPage();
+      }
+    }
+
+    // ========== 数据持久化 ==========
+    function saveData() {
+      // 保存当前周数据到weeklyData
+      saveCurrentWeekData();
+      
+      // 保存到localStorage
+      localStorage.setItem('lifeScriptData', JSON.stringify(appState));
+    }
+
+    function loadData() {
+      const saved = localStorage.getItem('lifeScriptData');
+      if (saved) {
+        const data = JSON.parse(saved);
+        
+        // 加载基本信息
+        appState.userName = data.userName || appState.userName;
+        appState.categories = data.categories || appState.categories;
+        appState.apiKey = data.apiKey || appState.apiKey;
+        appState.apiProvider = data.apiProvider || appState.apiProvider;
+        
+        // 加载多周数据(新格式)
+        appState.weeklyData = data.weeklyData || {};
+        
+        // 兼容旧格式数据
+        if (data.weekPlan) appState.weekPlan = data.weekPlan;
+        if (data.weekCheckin) appState.weekCheckin = data.weekCheckin;
+        if (data.reviewNotes) {
+          appState.reviewNotes = {
+            highlight: data.reviewNotes.highlight || '',
+            ng: data.reviewNotes.ng || '',
+            thinking: data.reviewNotes.thinking || ''
+          };
+        }
+      }
+    }
+
+    function exportData() {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `人生脚本_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          appState = data;
+          saveData();
+          location.reload();
+        } catch (error) {
+          alert('数据导入失败: ' + error.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ========== 启动应用 ==========
+    window.addEventListener('DOMContentLoaded', init);
+
+    // 绑定原因选择器的级联更新
+    document.addEventListener('DOMContentLoaded', () => {
+      const reasonCategory = document.getElementById('reasonCategory');
+      if (reasonCategory) {
+        reasonCategory.addEventListener('change', updateReasonTags);
+      }
+
+      const modalCategory = document.getElementById('modalCategory');
+      if (modalCategory) {
+        modalCategory.addEventListener('change', updateModalTags);
+      }
+      
+      // 页面关闭前强制保存
+      window.addEventListener('beforeunload', function(e) {
+        saveData();
+        console.log('🔒 页面关闭前强制保存');
+      });
+    });
+  </script>
 </body>
 </html>
